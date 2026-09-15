@@ -32,6 +32,8 @@ export const Route = createFileRoute("/")({
         content:
           "Turn job-site photos into a professional, printable quote or invoice in minutes.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Home,

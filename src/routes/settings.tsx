@@ -24,6 +24,8 @@ export const Route = createFileRoute("/settings")({
         property: "og:description",
         content: "Your contact details, printed on every quote and invoice.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Settings,

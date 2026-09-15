@@ -49,6 +49,8 @@ export const Route = createFileRoute("/project/$id")({
         property: "og:description",
         content: "Edit the scope, price materials and labor, and build the client total.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ProjectPage,

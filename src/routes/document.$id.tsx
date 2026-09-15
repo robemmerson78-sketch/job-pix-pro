@@ -22,6 +22,8 @@ export const Route = createFileRoute("/document/$id")({
         property: "og:description",
         content: "Itemized materials, labor and totals, ready to print or share.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: DocumentPage,
