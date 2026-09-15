@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Copy, FileText, Plus, ReceiptText, Trash2 } from "lucide-react";
+import { BriefcaseBusiness, Copy, FileText, Plus, ReceiptText, Trash2, WalletCards } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppHeader } from "@/components/AppHeader";
@@ -43,6 +43,10 @@ function Home() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
 
+  const projectValue = projects.reduce((sum, project) => sum + totals(project).total, 0);
+  const quoteCount = projects.filter((project) => project.type === "quote").length;
+  const invoiceCount = projects.length - quoteCount;
+
   useEffect(() => {
     const sync = () => setProjects(loadProjects());
     sync();
@@ -63,17 +67,37 @@ function Home() {
   return (
     <div className="min-h-screen">
       <AppHeader />
-      <main className="mx-auto max-w-3xl px-4 pb-28 pt-6">
-        <h1 className="text-3xl font-bold uppercase">Your jobs</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <main className="mx-auto max-w-3xl px-4 pb-28 pt-7">
+        <h1 className="text-3xl font-bold text-primary">Your jobs</h1>
+        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
           Photos in, priced quote out. Everything stays on this device.
         </p>
 
+        <section aria-label="Job summary" className="mt-6 grid grid-cols-3 overflow-hidden rounded-lg border border-border bg-card shadow-panel">
+          <div className="p-3.5 sm:p-4">
+            <BriefcaseBusiness className="mb-2 size-4 text-ai" />
+            <p className="text-xl font-extrabold text-primary">{projects.length}</p>
+            <p className="mt-0.5 text-xs font-medium text-muted-foreground">Jobs</p>
+          </div>
+          <div className="border-x border-border p-3.5 sm:p-4">
+            <ReceiptText className="mb-2 size-4 text-ai" />
+            <p className="text-xl font-extrabold text-primary">{quoteCount}/{invoiceCount}</p>
+            <p className="mt-0.5 text-xs font-medium text-muted-foreground">Quotes / invoices</p>
+          </div>
+          <div className="p-3.5 sm:p-4">
+            <WalletCards className="mb-2 size-4 text-attention" />
+            <p className="truncate text-xl font-extrabold text-primary">{money(projectValue)}</p>
+            <p className="mt-0.5 text-xs font-medium text-muted-foreground">Job value</p>
+          </div>
+        </section>
+
         {projects.length === 0 ? (
-          <div className="mt-10 rounded-xl border border-dashed border-border bg-card p-8 text-center shadow-panel">
-            <FileText className="mx-auto size-8 text-muted-foreground" />
-            <p className="mt-3 font-display text-lg font-semibold uppercase">No jobs yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+          <div className="mt-6 rounded-lg border border-border bg-card px-6 py-10 text-center shadow-panel">
+            <span className="mx-auto flex size-14 items-center justify-center rounded-lg bg-secondary text-ai">
+              <FileText className="size-7" />
+            </span>
+            <p className="mt-4 text-lg font-semibold text-primary">No jobs yet</p>
+            <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
               Start a job, add a few photos, and let the AI draft your scope of work.
             </p>
           </div>
@@ -84,7 +108,7 @@ function Home() {
               return (
                 <li
                   key={p.id}
-                  className="rounded-xl border border-border bg-card shadow-panel transition-shadow"
+                  className="overflow-hidden rounded-lg border border-border bg-card shadow-panel transition-shadow hover:shadow-md"
                 >
                   <button
                     className="flex w-full items-center gap-3 p-4 text-left"
@@ -102,7 +126,7 @@ function Home() {
                       </span>
                     )}
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-display text-lg font-semibold">
+                      <span className="block truncate text-lg font-semibold text-primary">
                         {p.name}
                       </span>
                       <span className="block truncate text-sm text-muted-foreground">
@@ -111,13 +135,13 @@ function Home() {
                       </span>
                     </span>
                     <span className="text-right">
-                      <span className="block font-display text-lg font-bold">
+                      <span className="block text-lg font-extrabold text-primary">
                         {money(t.total)}
                       </span>
                       <span
                         className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
                           p.type === "invoice"
-                            ? "bg-accent text-accent-foreground"
+                            ? "bg-attention/20 text-attention-foreground"
                             : "bg-secondary text-secondary-foreground"
                         }`}
                       >
@@ -158,7 +182,7 @@ function Home() {
         <div className="mx-auto max-w-3xl">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="lg" className="h-14 w-full text-base">
+              <Button variant="action" size="lg" className="h-14 w-full text-base">
                 <Plus className="size-5" /> New job
               </Button>
             </DialogTrigger>

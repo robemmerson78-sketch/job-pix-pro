@@ -53,12 +53,12 @@ function Settings() {
         >
           <ArrowLeft className="size-4" /> All jobs
         </Link>
-        <h1 className="mt-3 text-3xl font-bold uppercase">Business details</h1>
+        <h1 className="mt-4 text-3xl font-bold text-primary">Business details</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           These print at the top of every quote and invoice.
         </p>
 
-        <div className="mt-6 space-y-4 rounded-xl border border-border bg-card p-4 shadow-panel">
+        <div className="mt-6 space-y-5 rounded-lg border border-border bg-card p-5 shadow-panel">
           {FIELDS.map((f) => (
             <div key={f.key} className="space-y-1.5">
               <Label className="label-caps" htmlFor={f.key}>
@@ -76,6 +76,7 @@ function Settings() {
         </div>
 
         <Button
+          variant="action"
           className="mt-5 h-14 w-full text-base"
           onClick={() => {
             saveContractor(c);

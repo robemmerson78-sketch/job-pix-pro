@@ -66,9 +66,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-5 rounded-xl border border-border bg-card p-4 shadow-panel">
+    <section className="mt-5 rounded-lg border border-border bg-card p-4 shadow-panel sm:p-5">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="font-display text-xl font-semibold uppercase">{title}</h2>
+        <h2 className="text-xl font-semibold text-primary">{title}</h2>
         {action}
       </div>
       {children}
@@ -179,11 +179,11 @@ function ProjectPage() {
         </Link>
 
         {/* Job details */}
-        <section className="mt-3 rounded-xl border border-border bg-card p-4 shadow-panel">
+        <section className="mt-4 rounded-lg border border-border bg-card p-4 shadow-panel sm:p-5">
           <Input
             value={project.name}
             onChange={(e) => update({ name: e.target.value })}
-            className="h-12 border-0 px-0 font-display text-2xl font-bold shadow-none focus-visible:ring-0"
+            className="h-12 border-0 px-0 text-2xl font-bold text-primary shadow-none focus-visible:ring-0"
             placeholder="Job name"
           />
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -208,17 +208,18 @@ function ProjectPage() {
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             {(["quote", "invoice"] as const).map((k) => (
-              <button
+              <Button
                 key={k}
                 onClick={() => update({ type: k })}
-                className={`h-11 rounded-md border font-display text-sm font-semibold uppercase tracking-wide transition-colors ${
+                variant="outline"
+                className={`h-11 text-sm font-semibold capitalize ${
                   project.type === k
-                    ? "border-accent bg-accent text-accent-foreground"
+                    ? "border-ai bg-secondary text-primary shadow-none"
                     : "border-border bg-background text-muted-foreground"
                 }`}
               >
                 {k}
-              </button>
+              </Button>
             ))}
           </div>
         </section>
@@ -273,7 +274,7 @@ function ProjectPage() {
               <ImagePlus className="size-5" /> Upload
             </Button>
           </div>
-          <Button className="mt-2 h-14 w-full text-base" onClick={runDraft} disabled={drafting}>
+          <Button variant="action" className="mt-2 h-14 w-full text-base" onClick={runDraft} disabled={drafting}>
             {drafting ? (
               <Loader2 className="size-5 animate-spin" />
             ) : (
@@ -398,7 +399,7 @@ function ProjectPage() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <p className="mt-2 text-right font-display text-base font-semibold">
+                <p className="mt-2 text-right text-base font-bold text-primary">
                   {money((m.qty || 0) * (m.price || 0))}
                 </p>
               </div>
@@ -445,7 +446,7 @@ function ProjectPage() {
               />
             </div>
           </div>
-          <p className="mt-3 text-right font-display text-lg font-semibold">
+          <p className="mt-3 text-right text-lg font-bold text-primary">
             Labor subtotal {money(t.labor)}
           </p>
         </Section>
@@ -468,9 +469,12 @@ function ProjectPage() {
               />
             </div>
             <Row label="Tax / markup" value={money(t.tax)} />
-            <div className="flex items-baseline justify-between border-t-2 border-foreground pt-3">
-              <span className="font-display text-xl font-bold uppercase">Total</span>
-              <span className="font-display text-3xl font-bold">{money(t.total)}</span>
+            <div className="mt-3 border-t-2 border-attention pt-4">
+              <span className="block text-xs font-semibold text-muted-foreground">Recommended price</span>
+              <div className="mt-1 flex items-baseline justify-between gap-3">
+                <span className="text-lg font-bold text-primary">Total</span>
+                <span className="text-4xl font-extrabold text-primary">{money(t.total)}</span>
+              </div>
             </div>
           </div>
           <div className="mt-4 space-y-1.5">
@@ -489,6 +493,7 @@ function ProjectPage() {
         <div className="mx-auto max-w-3xl">
           <Button
             size="lg"
+            variant="action"
             className="h-14 w-full text-base"
             onClick={() => navigate({ to: "/document/$id", params: { id: project.id } })}
           >
