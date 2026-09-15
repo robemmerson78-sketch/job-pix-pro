@@ -3,21 +3,21 @@ import { HardHat, Settings2 } from "lucide-react";
 
 export function AppHeader({ right }: { right?: React.ReactNode }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur no-print">
-      <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
+    <header className="sticky top-0 z-20 bg-primary text-primary-foreground shadow-sm no-print">
+      <div className="mx-auto flex h-16 max-w-3xl items-center gap-3 px-4">
         <Link to="/" className="flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-md bg-accent text-accent-foreground">
+          <span className="flex size-9 items-center justify-center rounded-md bg-ai text-ai-foreground">
             <HardHat className="size-5" />
           </span>
-          <span className="font-display text-xl font-bold uppercase tracking-wide">
-            SiteQuote
+          <span className="font-display text-xl font-extrabold">
+            Job<span className="text-ai">Pix</span>
           </span>
         </Link>
         <div className="ml-auto flex items-center gap-1">
           {right}
           <Link
             to="/settings"
-            className="flex size-10 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+            className="flex size-11 items-center justify-center rounded-md text-primary-foreground/75 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
             aria-label="Business settings"
           >
             <Settings2 className="size-5" />

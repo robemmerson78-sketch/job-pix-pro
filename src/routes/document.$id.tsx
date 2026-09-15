@@ -11,17 +11,19 @@ import { defaultContractor } from "@/lib/storage";
 export const Route = createFileRoute("/document/$id")({
   head: () => ({
     meta: [
-      { title: "Printable Quote & Invoice — SiteQuote" },
+      { title: "Printable Quote & Invoice — JobPix" },
       {
         name: "description",
         content:
           "A clean, printable contractor quote or invoice with itemized materials, labor and totals, ready to print, save as PDF or share.",
       },
-      { property: "og:title", content: "Printable Quote & Invoice — SiteQuote" },
+      { property: "og:title", content: "Printable Quote & Invoice — JobPix" },
       {
         property: "og:description",
         content: "Itemized materials, labor and totals, ready to print or share.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: DocumentPage,
@@ -82,9 +84,10 @@ function DocumentPage() {
       </div>
 
       <article className="print-sheet mx-auto my-6 max-w-3xl border border-border bg-card p-6 shadow-panel sm:p-10">
-        <header className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-foreground pb-4">
+        <div className="mb-6 h-2 w-20 rounded-sm bg-ai" />
+        <header className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-primary pb-5">
           <div>
-            <h1 className="text-3xl font-bold uppercase">{c.business || c.name || "Your business"}</h1>
+            <h1 className="text-3xl font-extrabold text-primary">{c.business || c.name || "Your business"}</h1>
             <div className="mt-1 text-sm text-muted-foreground">
               {c.business && c.name ? <div>{c.name}</div> : null}
               {c.address ? <div>{c.address}</div> : null}
@@ -94,7 +97,7 @@ function DocumentPage() {
             </div>
           </div>
           <div className="text-right">
-            <div className="font-display text-2xl font-bold uppercase tracking-wide">
+            <div className="text-2xl font-bold text-primary">
               {heading}
             </div>
             <div className="text-sm text-muted-foreground">Ref {ref}</div>
@@ -120,7 +123,7 @@ function DocumentPage() {
 
         {project.scope ? (
           <section className="mt-6">
-            <h2 className="text-lg font-semibold uppercase">Scope of work</h2>
+            <h2 className="text-lg font-semibold text-primary">Scope of work</h2>
             <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{project.scope}</p>
           </section>
         ) : null}
@@ -139,7 +142,7 @@ function DocumentPage() {
 
         {project.materials.length ? (
           <section className="mt-6">
-            <h2 className="text-lg font-semibold uppercase">Materials</h2>
+            <h2 className="text-lg font-semibold text-primary">Materials</h2>
             <table className="mt-2 w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left">
@@ -166,7 +169,7 @@ function DocumentPage() {
         ) : null}
 
         <section className="mt-6">
-          <h2 className="text-lg font-semibold uppercase">Labor</h2>
+          <h2 className="text-lg font-semibold text-primary">Labor</h2>
           <div className="mt-1 flex justify-between text-sm">
             <span>
               {project.laborHours} hrs @ {money(project.laborRate)}/hr
@@ -188,9 +191,9 @@ function DocumentPage() {
             <span className="text-muted-foreground">Tax / markup ({project.taxPercent}%)</span>
             <span>{money(t.tax)}</span>
           </div>
-          <div className="flex items-baseline justify-between border-t-2 border-foreground pt-2">
-            <span className="font-display text-lg font-bold uppercase">Total</span>
-            <span className="font-display text-2xl font-bold">{money(t.total)}</span>
+          <div className="mt-3 flex items-baseline justify-between border-t-2 border-attention pt-3 text-primary">
+            <span className="text-lg font-bold">Total</span>
+            <span className="text-3xl font-extrabold">{money(t.total)}</span>
           </div>
         </section>
 
@@ -201,10 +204,13 @@ function DocumentPage() {
           </section>
         ) : null}
 
-        <footer className="mt-8 text-xs text-muted-foreground">
-          {project.type === "quote"
-            ? "This quote is an estimate based on the work visible at the time of assessment. Hidden damage or changes to scope may affect the final price."
-            : "Thank you for your business. Payment is due on the terms noted above."}
+        <footer className="mt-8 flex flex-col gap-3 border-t border-border pt-4 text-xs text-muted-foreground sm:flex-row sm:items-end sm:justify-between">
+          <span className="max-w-xl">
+            {project.type === "quote"
+              ? "This quote is an estimate based on the work visible at the time of assessment. Hidden damage or changes to scope may affect the final price."
+              : "Thank you for your business. Payment is due on the terms noted above."}
+          </span>
+          <span className="shrink-0 font-semibold text-primary">Prepared with JobPix</span>
         </footer>
       </article>
 
@@ -213,7 +219,7 @@ function DocumentPage() {
           <Button variant="secondary" className="h-14 flex-1 text-base" onClick={share}>
             <Share2 className="size-5" /> Share
           </Button>
-          <Button className="h-14 flex-1 text-base" onClick={() => window.print()}>
+          <Button variant="action" className="h-14 flex-1 text-base" onClick={() => window.print()}>
             <Printer className="size-5" /> Print / PDF
           </Button>
         </div>
