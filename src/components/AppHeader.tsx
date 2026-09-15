@@ -10,7 +10,7 @@ export function AppHeader({ right }: { right?: React.ReactNode }) {
             <HardHat className="size-5" />
           </span>
           <span className="font-display text-xl font-extrabold">
-            Site<span className="text-ai">Quote</span>
+            Job<span className="text-ai">Pix</span>
           </span>
         </Link>
         <div className="ml-auto flex items-center gap-1">

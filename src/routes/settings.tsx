@@ -13,13 +13,13 @@ import type { Contractor } from "@/lib/types";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Business Details — SiteQuote" },
+      { title: "Business Details — JobPix" },
       {
         name: "description",
         content:
           "Set the business name, phone, email and license number that appear on every quote and invoice you send.",
       },
-      { property: "og:title", content: "Business Details — SiteQuote" },
+      { property: "og:title", content: "Business Details — JobPix" },
       {
         property: "og:description",
         content: "Your contact details, printed on every quote and invoice.",

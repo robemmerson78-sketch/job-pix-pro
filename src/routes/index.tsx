@@ -20,13 +20,13 @@ import { emptyProject, money, totals, type Project } from "@/lib/types";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SiteQuote — Photo to Contractor Quote & Invoice" },
+      { title: "JobPix — Photo to Contractor Quote & Invoice" },
       {
         name: "description",
         content:
           "Snap job-site photos, get an AI-drafted scope of work, price materials and labor, and hand your client a clean printable quote or invoice.",
       },
-      { property: "og:title", content: "SiteQuote — Photo to Contractor Quote & Invoice" },
+      { property: "og:title", content: "JobPix — Photo to Contractor Quote & Invoice" },
       {
         property: "og:description",
         content:

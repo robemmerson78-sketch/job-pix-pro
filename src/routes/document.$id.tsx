@@ -11,13 +11,13 @@ import { defaultContractor } from "@/lib/storage";
 export const Route = createFileRoute("/document/$id")({
   head: () => ({
     meta: [
-      { title: "Printable Quote & Invoice — SiteQuote" },
+      { title: "Printable Quote & Invoice — JobPix" },
       {
         name: "description",
         content:
           "A clean, printable contractor quote or invoice with itemized materials, labor and totals, ready to print, save as PDF or share.",
       },
-      { property: "og:title", content: "Printable Quote & Invoice — SiteQuote" },
+      { property: "og:title", content: "Printable Quote & Invoice — JobPix" },
       {
         property: "og:description",
         content: "Itemized materials, labor and totals, ready to print or share.",
@@ -204,10 +204,13 @@ function DocumentPage() {
           </section>
         ) : null}
 
-        <footer className="mt-8 text-xs text-muted-foreground">
-          {project.type === "quote"
-            ? "This quote is an estimate based on the work visible at the time of assessment. Hidden damage or changes to scope may affect the final price."
-            : "Thank you for your business. Payment is due on the terms noted above."}
+        <footer className="mt-8 flex flex-col gap-3 border-t border-border pt-4 text-xs text-muted-foreground sm:flex-row sm:items-end sm:justify-between">
+          <span className="max-w-xl">
+            {project.type === "quote"
+              ? "This quote is an estimate based on the work visible at the time of assessment. Hidden damage or changes to scope may affect the final price."
+              : "Thank you for your business. Payment is due on the terms noted above."}
+          </span>
+          <span className="shrink-0 font-semibold text-primary">Prepared with JobPix</span>
         </footer>
       </article>
 

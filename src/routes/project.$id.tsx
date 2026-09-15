@@ -38,13 +38,13 @@ import { money, totals, type Material, type Project } from "@/lib/types";
 export const Route = createFileRoute("/project/$id")({
   head: () => ({
     meta: [
-      { title: "Job Scope & Pricing — SiteQuote" },
+      { title: "Job Scope & Pricing — JobPix" },
       {
         name: "description",
         content:
           "Add job-site photos, edit the AI-drafted scope of work, price materials and labor, and build the client total.",
       },
-      { property: "og:title", content: "Job Scope & Pricing — SiteQuote" },
+      { property: "og:title", content: "Job Scope & Pricing — JobPix" },
       {
         property: "og:description",
         content: "Edit the scope, price materials and labor, and build the client total.",
