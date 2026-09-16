@@ -65,12 +65,16 @@
   --color-ai-foreground: var(--ai-foreground);
   --color-attention: var(--attention);
   --color-attention-foreground: var(--attention-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --shadow-panel: 0 1px 2px oklch(0.26 0.045 260 / 0.06), 0 8px 24px oklch(0.26 0.045 260 / 0.07);
   --shadow-action: 0 8px 20px oklch(0.7 0.13 174 / 0.24);
 }
 
 :root {
   --radius: 0.5rem;
+  --brand: oklch(0.26 0.045 260);
+  --brand-foreground: oklch(0.985 0.003 145);
   --background: oklch(0.974 0.005 145);
   --foreground: oklch(0.26 0.045 260);
   --card: oklch(0.995 0.002 145);
