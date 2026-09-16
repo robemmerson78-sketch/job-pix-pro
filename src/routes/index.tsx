@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BriefcaseBusiness, Copy, FileText, Plus, ReceiptText, Trash2, WalletCards } from "lucide-react";
+import { ArrowLeftRight, BriefcaseBusiness, Copy, FileText, Plus, ReceiptText, Trash2, WalletCards } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppHeader } from "@/components/AppHeader";

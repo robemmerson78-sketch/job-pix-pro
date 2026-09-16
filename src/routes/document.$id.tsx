@@ -204,6 +204,33 @@ function DocumentPage() {
           </section>
         ) : null}
 
+        <section className="mt-10 grid gap-8 sm:grid-cols-2">
+          <div>
+            <div className="h-10 border-b border-primary" />
+            <div className="label-caps mt-1.5">
+              {c.business || c.name || "Contractor"} signature
+            </div>
+          </div>
+          <div>
+            <div className="h-10 border-b border-primary" />
+            <div className="label-caps mt-1.5">Date</div>
+          </div>
+          {project.type === "quote" ? (
+            <>
+              <div>
+                <div className="h-10 border-b border-primary" />
+                <div className="label-caps mt-1.5">
+                  Client signature{project.client ? ` — ${project.client}` : ""}
+                </div>
+              </div>
+              <div>
+                <div className="h-10 border-b border-primary" />
+                <div className="label-caps mt-1.5">Date</div>
+              </div>
+            </>
+          ) : null}
+        </section>
+
         <footer className="mt-8 flex flex-col gap-3 border-t border-border pt-4 text-xs text-muted-foreground sm:flex-row sm:items-end sm:justify-between">
           <span className="max-w-xl">
             {project.type === "quote"
