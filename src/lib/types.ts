@@ -1,3 +1,5 @@
+import { defaultQuoteDefaults, loadPreferences, type QuoteDefaults } from "./settings";
+
 export type DocType = "quote" | "invoice";
 
 export interface Task {
@@ -28,6 +30,9 @@ export interface Project {
   laborRate: number;
   taxPercent: number;
   notes: string;
+  paymentTerms?: string;
+  validityDays?: number;
+  depositPercent?: number;
 }
 
 export interface Contractor {
@@ -37,9 +42,10 @@ export interface Contractor {
   email: string;
   address: string;
   license: string;
+  logo?: string;
 }
 
-export function emptyProject(name: string): Project {
+export function emptyProject(name: string, defaults: QuoteDefaults = defaultQuoteDefaults): Project {
   const now = Date.now();
   return {
     id: crypto.randomUUID(),
@@ -54,9 +60,12 @@ export function emptyProject(name: string): Project {
     tasks: [],
     materials: [],
     laborHours: 0,
-    laborRate: 65,
-    taxPercent: 0,
+    laborRate: defaults.laborRate,
+    taxPercent: defaults.taxPercent,
     notes: "",
+    paymentTerms: defaults.paymentTerms,
+    validityDays: defaults.validityDays,
+    depositPercent: defaults.depositPercent,
   };
 }
 
@@ -71,5 +80,8 @@ export function totals(p: Project) {
   return { materials, labor, subtotal, tax, total: subtotal + tax };
 }
 
-export const money = (n: number) =>
-  n.toLocaleString(undefined, { style: "currency", currency: "USD" });
+export const money = (n: number, currency?: string) =>
+  n.toLocaleString(undefined, {
+    style: "currency",
+    currency: currency ?? loadPreferences().currency,
+  });
