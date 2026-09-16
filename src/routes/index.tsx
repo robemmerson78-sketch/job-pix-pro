@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BriefcaseBusiness, Copy, FileText, Plus, ReceiptText, Trash2, WalletCards } from "lucide-react";
+import { ArrowLeftRight, BriefcaseBusiness, Copy, FileText, Plus, ReceiptText, Trash2, WalletCards } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppHeader } from "@/components/AppHeader";
@@ -151,7 +151,28 @@ function Home() {
                       </span>
                     </span>
                   </button>
-                  <div className="flex justify-end gap-1 border-t border-border px-2 py-1">
+                  <div className="flex flex-wrap justify-end gap-1 border-t border-border px-2 py-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate({ to: "/document/$id", params: { id: p.id } })}
+                    >
+                      <FileText className="size-4" /> Open {p.type}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-attention-foreground hover:text-attention-foreground"
+                      onClick={() => {
+                        upsertProject({ ...p, type: p.type === "quote" ? "invoice" : "quote" });
+                        toast.success(
+                          p.type === "quote" ? "Converted to invoice" : "Converted back to quote",
+                        );
+                      }}
+                    >
+                      <ArrowLeftRight className="size-4" />
+                      {p.type === "quote" ? "To invoice" : "To quote"}
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
