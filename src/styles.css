@@ -115,6 +115,8 @@
 
 
 .dark {
+  --brand: oklch(0.235 0.038 260);
+  --brand-foreground: oklch(0.97 0.005 145);
   --background: oklch(0.19 0.035 260);
   --foreground: oklch(0.965 0.005 145);
   --card: oklch(0.245 0.038 260);
@@ -195,6 +197,15 @@
     background: white;
   }
   .print-sheet {
+    --background: white;
+    --foreground: oklch(0.22 0.03 260);
+    --card: white;
+    --card-foreground: oklch(0.22 0.03 260);
+    --primary: oklch(0.26 0.045 260);
+    --muted-foreground: oklch(0.45 0.02 250);
+    --border: oklch(0.8 0.005 260);
+    background: white !important;
+    color: var(--foreground) !important;
     box-shadow: none !important;
     border: none !important;
     margin: 0 !important;
