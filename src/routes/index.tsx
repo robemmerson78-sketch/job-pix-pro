@@ -14,7 +14,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { deleteProject, duplicateProject, loadProjects, upsertProject } from "@/lib/storage";
+import {
+  deleteProject,
+  duplicateProject,
+  loadContractor,
+  loadProjects,
+  upsertProject,
+} from "@/lib/storage";
+import { loadQuoteDefaults } from "@/lib/settings";
 import { emptyProject, money, totals, type Project } from "@/lib/types";
 
 export const Route = createFileRoute("/")({
@@ -49,9 +56,13 @@ function Home() {
   const quoteCount = projects.filter((project) => project.type === "quote").length;
   const invoiceCount = projects.length - quoteCount;
 
+  const [profileDone, setProfileDone] = useState(true);
+
   useEffect(() => {
     const sync = () => setProjects(loadProjects());
     sync();
+    const c = loadContractor();
+    setProfileDone(Boolean(c.business.trim() || c.name.trim()));
     window.addEventListener("cq:projects", sync);
     return () => window.removeEventListener("cq:projects", sync);
   }, []);
@@ -59,7 +70,7 @@ function Home() {
   const create = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    const p = emptyProject(trimmed);
+    const p = emptyProject(trimmed, loadQuoteDefaults());
     upsertProject(p);
     setName("");
     setOpen(false);
