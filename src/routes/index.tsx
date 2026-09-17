@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeftRight, BriefcaseBusiness, Copy, FileText, Plus, ReceiptText, Trash2, WalletCards } from "lucide-react";
 import { toast } from "sonner";
@@ -103,6 +103,23 @@ function Home() {
             <p className="mt-0.5 text-xs font-medium text-muted-foreground">Job value</p>
           </div>
         </section>
+
+        {!profileDone ? (
+          <Link
+            to="/settings"
+            className="mt-4 flex items-start gap-3 rounded-lg border border-attention/50 bg-attention/10 p-4"
+          >
+            <BriefcaseBusiness className="mt-0.5 size-5 shrink-0 text-attention-foreground" />
+            <span>
+              <span className="block text-base font-semibold text-primary">
+                Complete your business profile
+              </span>
+              <span className="mt-0.5 block text-sm leading-relaxed text-muted-foreground">
+                Add your business information so JobPix can automatically include it on your quotes.
+              </span>
+            </span>
+          </Link>
+        ) : null}
 
         {projects.length === 0 ? (
           <div className="mt-6 rounded-lg border border-border bg-card px-6 py-10 text-center shadow-panel">
