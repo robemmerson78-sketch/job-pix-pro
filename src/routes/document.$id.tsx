@@ -84,7 +84,11 @@ function DocumentPage() {
       </div>
 
       <article className="print-sheet mx-auto my-6 max-w-3xl border border-border bg-card p-6 shadow-panel sm:p-10">
-        <div className="mb-6 h-2 w-20 rounded-sm bg-ai" />
+        {c.logo ? (
+          <img src={c.logo} alt="" className="mb-4 h-14 w-auto max-w-[12rem] object-contain" />
+        ) : (
+          <div className="mb-6 h-2 w-20 rounded-sm bg-ai" />
+        )}
         <header className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-primary pb-5">
           <div>
             <h1 className="text-3xl font-extrabold text-primary">{c.business || c.name || "Your business"}</h1>
@@ -195,7 +199,30 @@ function DocumentPage() {
             <span className="text-lg font-bold">Total</span>
             <span className="text-3xl font-extrabold">{money(t.total)}</span>
           </div>
+          {project.depositPercent ? (
+            <div className="flex justify-between pt-1 font-semibold">
+              <span>Deposit due ({project.depositPercent}%)</span>
+              <span>{money((t.total * project.depositPercent) / 100)}</span>
+            </div>
+          ) : null}
         </section>
+
+        {project.paymentTerms || (project.type === "quote" && project.validityDays) ? (
+          <section className="mt-8 grid gap-4 border-t border-border pt-4 text-sm sm:grid-cols-2">
+            {project.paymentTerms ? (
+              <div>
+                <div className="label-caps">Payment terms</div>
+                <div className="mt-1">{project.paymentTerms}</div>
+              </div>
+            ) : null}
+            {project.type === "quote" && project.validityDays ? (
+              <div>
+                <div className="label-caps">Quote valid for</div>
+                <div className="mt-1">{project.validityDays} days from the date above</div>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
 
         {project.notes ? (
           <section className="mt-8 border-t border-border pt-4">

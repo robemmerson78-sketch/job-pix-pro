@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeftRight, BriefcaseBusiness, Copy, FileText, Plus, ReceiptText, Trash2, WalletCards } from "lucide-react";
 import { toast } from "sonner";
@@ -14,7 +14,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { deleteProject, duplicateProject, loadProjects, upsertProject } from "@/lib/storage";
+import {
+  deleteProject,
+  duplicateProject,
+  loadContractor,
+  loadProjects,
+  upsertProject,
+} from "@/lib/storage";
+import { loadQuoteDefaults } from "@/lib/settings";
 import { emptyProject, money, totals, type Project } from "@/lib/types";
 
 export const Route = createFileRoute("/")({
@@ -49,9 +56,13 @@ function Home() {
   const quoteCount = projects.filter((project) => project.type === "quote").length;
   const invoiceCount = projects.length - quoteCount;
 
+  const [profileDone, setProfileDone] = useState(true);
+
   useEffect(() => {
     const sync = () => setProjects(loadProjects());
     sync();
+    const c = loadContractor();
+    setProfileDone(Boolean(c.business.trim() || c.name.trim()));
     window.addEventListener("cq:projects", sync);
     return () => window.removeEventListener("cq:projects", sync);
   }, []);
@@ -59,7 +70,7 @@ function Home() {
   const create = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    const p = emptyProject(trimmed);
+    const p = emptyProject(trimmed, loadQuoteDefaults());
     upsertProject(p);
     setName("");
     setOpen(false);
@@ -92,6 +103,23 @@ function Home() {
             <p className="mt-0.5 text-xs font-medium text-muted-foreground">Job value</p>
           </div>
         </section>
+
+        {!profileDone ? (
+          <Link
+            to="/settings"
+            className="mt-4 flex items-start gap-3 rounded-lg border border-attention/50 bg-attention/10 p-4"
+          >
+            <BriefcaseBusiness className="mt-0.5 size-5 shrink-0 text-attention-foreground" />
+            <span>
+              <span className="block text-base font-semibold text-primary">
+                Complete your business profile
+              </span>
+              <span className="mt-0.5 block text-sm leading-relaxed text-muted-foreground">
+                Add your business information so JobPix can automatically include it on your quotes.
+              </span>
+            </span>
+          </Link>
+        ) : null}
 
         {projects.length === 0 ? (
           <div className="mt-6 rounded-lg border border-border bg-card px-6 py-10 text-center shadow-panel">
