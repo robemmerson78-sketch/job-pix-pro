@@ -33,6 +33,7 @@ import {
   storeSearchUrls,
   upsertProject,
 } from "@/lib/storage";
+import { loadPreferences } from "@/lib/settings";
 import { money, totals, type Material, type Project } from "@/lib/types";
 
 export const Route = createFileRoute("/project/$id")({
@@ -137,8 +138,12 @@ function ProjectPage() {
     }
     setDrafting(true);
     try {
+      const units = loadPreferences().units;
       const result = await draftScope({
-        data: { photos: project.photos.slice(0, 4), hint: project.scope },
+        data: {
+          photos: project.photos.slice(0, 4),
+          hint: [project.scope, `Use ${units} measurements.`].filter(Boolean).join("\n"),
+        },
       });
       update({
         scope: result.description || project.scope,
@@ -479,12 +484,48 @@ function ProjectPage() {
               </div>
             </div>
           </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="label-caps">Payment terms</Label>
+              <Input
+                className="h-12 text-base"
+                value={project.paymentTerms ?? ""}
+                onChange={(e) => update({ paymentTerms: e.target.value })}
+                placeholder="Net 15 — payable on completion"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="label-caps">Valid for (days)</Label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                className="h-12 text-base"
+                value={project.validityDays || ""}
+                onChange={(e) => update({ validityDays: Number(e.target.value) })}
+                placeholder="30"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="label-caps">Deposit %</Label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={100}
+                className="h-12 text-base"
+                value={project.depositPercent || ""}
+                onChange={(e) => update({ depositPercent: Number(e.target.value) })}
+                placeholder="0"
+              />
+            </div>
+          </div>
           <div className="mt-4 space-y-1.5">
             <Label className="label-caps">Notes for the client</Label>
             <Textarea
               value={project.notes}
               onChange={(e) => update({ notes: e.target.value })}
-              placeholder="Payment terms, timeline, exclusions…"
+              placeholder="Timeline, exclusions, warranty…"
               className="min-h-20 text-base"
             />
           </div>
