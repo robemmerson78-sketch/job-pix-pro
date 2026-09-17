@@ -199,7 +199,30 @@ function DocumentPage() {
             <span className="text-lg font-bold">Total</span>
             <span className="text-3xl font-extrabold">{money(t.total)}</span>
           </div>
+          {project.depositPercent ? (
+            <div className="flex justify-between pt-1 font-semibold">
+              <span>Deposit due ({project.depositPercent}%)</span>
+              <span>{money((t.total * project.depositPercent) / 100)}</span>
+            </div>
+          ) : null}
         </section>
+
+        {project.paymentTerms || (project.type === "quote" && project.validityDays) ? (
+          <section className="mt-8 grid gap-4 border-t border-border pt-4 text-sm sm:grid-cols-2">
+            {project.paymentTerms ? (
+              <div>
+                <div className="label-caps">Payment terms</div>
+                <div className="mt-1">{project.paymentTerms}</div>
+              </div>
+            ) : null}
+            {project.type === "quote" && project.validityDays ? (
+              <div>
+                <div className="label-caps">Quote valid for</div>
+                <div className="mt-1">{project.validityDays} days from the date above</div>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
 
         {project.notes ? (
           <section className="mt-8 border-t border-border pt-4">
