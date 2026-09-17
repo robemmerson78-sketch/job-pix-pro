@@ -84,7 +84,11 @@ function DocumentPage() {
       </div>
 
       <article className="print-sheet mx-auto my-6 max-w-3xl border border-border bg-card p-6 shadow-panel sm:p-10">
-        <div className="mb-6 h-2 w-20 rounded-sm bg-ai" />
+        {c.logo ? (
+          <img src={c.logo} alt="" className="mb-4 h-14 w-auto max-w-[12rem] object-contain" />
+        ) : (
+          <div className="mb-6 h-2 w-20 rounded-sm bg-ai" />
+        )}
         <header className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-primary pb-5">
           <div>
             <h1 className="text-3xl font-extrabold text-primary">{c.business || c.name || "Your business"}</h1>
