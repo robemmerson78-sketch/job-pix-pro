@@ -41,9 +41,11 @@ Turn job photos into a structured, reviewable analysis — with a second AI opin
 ## Your refinements, folded in
 
 **All photos, never silently dropped.** Analysis uses every photo on the job, up to the existing
-8-photo limit. The panel states plainly how many photos are going to the AI ("Analysing all 6
-photos"). If a model can't accept that many in one request, the panel says exactly which photos are
-included and which are not, before you run it — no silent trimming.
+8-photo limit. Before you run it, the panel states the count plainly — "6 photos ready for analysis
+— all 6 will be analysed." If a model can't accept that many in one request, it names exactly which
+photos are included and which are not, before you start — no silent trimming. Afterwards a one-line
+summary shows photos analysed and findings by status (Observed / Estimated / Unknown / Confirmed by
+you).
 
 **Comparison is arithmetic, not a third AI call.** `compareAnalyses()` is a pure function in plain
 code: it normalises each item (lowercase, trimmed, singular/plural and unit-string smoothing),
