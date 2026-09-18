@@ -36,7 +36,7 @@ Turn job photos into a structured, reviewable analysis — with a second AI opin
 
 **On the customer document:** unchanged. The analysis is an internal working document; only what you push into the scope, tasks, materials and pricing appears on a quote or invoice. No quote is ever sent automatically.
 
-**In Settings:** a small "Photo analysis" group — which model runs first, and whether to keep the sharper photo copies (with a note on storage use).
+**In Settings:** a small "Photo analysis" group — which model runs first, and whether to keep the sharper photo copies (with a note on storage use). Nothing is hard-coded: the "Analyse photos" button always uses whichever model this setting names, and "Second opinion" runs the other one.
 
 ## Your refinements, folded in
 
