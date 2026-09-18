@@ -123,3 +123,23 @@ No autonomous agents, no automatic pricing, no automatic sending, no AI personal
 - **Cost and time:** a full structured analysis over up to 8 photos is a bigger request than today's draft; the second opinion doubles it. Both are explicit button presses, and long runs stream so you see progress rather than a dead spinner.
 - **Measurements from photos are guesses.** They stay Estimated until you confirm them, and the panel says so plainly.
 - **Device storage** grows with the sharper copies; the Settings switch turns them off, and the safety rules above mean a full device never costs you a job.
+
+## Verified against the code, plus conflicts to know about
+
+Checked before writing this: the job editor, storage helpers, settings, types and the printed document.
+
+- **First model comes from the setting.** The analyse button reads `analysisModel` from preferences; second opinion runs whichever model that isn't. No model name is hard-coded in the panel.
+- **All photos.** Today's draft path deliberately sends only the first 4 photos; the new analysis path sends all of them, up to the existing 8, and states the count before you run it. The old 4-photo behaviour stays as it is inside `draftScope`, untouched.
+- **Deterministic comparison.** `compareAnalyses()` is plain local code in `src/lib/analysis.ts` — no network call, no credits.
+- **Confirmed findings protected.** Items are keyed by stable id; the merge step never writes over an item whose status is `confirmed`.
+- **Nothing auto-pushed.** Findings only enter scope, tasks or materials when you press "Use in this quote", and they append — existing lines are never replaced.
+- **Storage separation.** Jobs and the current 1024px photos stay in localStorage under the existing keys; sharper copies live in their own IndexedDB store, written after the job save, in a separate transaction, with failures caught.
+- **Printed document unchanged.** No edits to the quote/invoice route.
+- **Both hydration fixes.** The currency one: amounts are formatted with the saved currency read during render, so the server's first paint can differ from the device's. The support-link one: the contact link embeds device details that don't exist on the server. Both get fixed by reading those values after the page is live on the device, which is how the rest of the app already works.
+
+Conflicts and assumptions worth your sign-off:
+
+1. **Existing jobs have no sharper photos.** Photos already taken can't be re-sharpened — the original file is gone. Those jobs analyse using their stored photos, which is exactly today's quality. New photos get the sharper copy.
+2. **The 8-photo cap stays.** I'm not raising it; that would change the photo workflow.
+3. **Long runs.** A full analysis over 8 photos can take a minute or more. The button shows progress and is never cut off by a timer.
+4. **Analysis stays on the device.** Like everything else in JobPix, a report saved on your phone isn't visible on another device. No accounts, no server storage.
