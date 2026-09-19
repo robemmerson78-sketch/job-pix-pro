@@ -1,3 +1,4 @@
+import { deleteAnalysisPhotos } from "./analysis-photos";
 import type { Contractor, Project } from "./types";
 
 const PROJECTS_KEY = "cq.projects.v1";
@@ -37,7 +38,10 @@ export function upsertProject(project: Project) {
 }
 
 export function deleteProject(id: string) {
+  const project = getProject(id);
   saveProjects(loadProjects().filter((p) => p.id !== id));
+  // Prune the job's sharper analysis copies; failures here never touch saved jobs.
+  if (project?.photoIds?.length) void deleteAnalysisPhotos(project.photoIds);
 }
 
 export function duplicateProject(id: string): Project | undefined {
@@ -47,6 +51,9 @@ export function duplicateProject(id: string): Project | undefined {
     ...p,
     id: crypto.randomUUID(),
     name: `${p.name} (copy)`,
+    // Sharper analysis copies belong to the original job; the copy analyses its
+    // stored photos instead, so deleting either job can never strip the other.
+    photoIds: [],
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
