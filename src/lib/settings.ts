@@ -1,3 +1,7 @@
+import { useEffect, useState } from "react";
+
+import type { ModelKey } from "./analysis";
+
 export type ThemeChoice = "system" | "light" | "dark";
 export type CurrencyCode = "CAD" | "USD";
 export type UnitSystem = "imperial" | "metric";
@@ -6,6 +10,10 @@ export interface Preferences {
   theme: ThemeChoice;
   currency: CurrencyCode;
   units: UnitSystem;
+  /** Which model runs first when analysing photos; the other is the second opinion. */
+  analysisModel: ModelKey;
+  /** Keep sharper analysis-only photo copies on this device. */
+  keepSharpPhotos: boolean;
 }
 
 export interface QuoteDefaults {
@@ -23,6 +31,8 @@ export const defaultPreferences: Preferences = {
   theme: "system",
   currency: "CAD",
   units: "imperial",
+  analysisModel: "openai",
+  keepSharpPhotos: true,
 };
 
 export const defaultQuoteDefaults: QuoteDefaults = {
