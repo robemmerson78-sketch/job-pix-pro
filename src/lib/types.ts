@@ -24,6 +24,8 @@ export interface Project {
   createdAt: number;
   updatedAt: number;
   photos: string[];
+  /** Stable ids matching `photos` by position, used to find sharper analysis copies. */
+  photoIds?: string[];
   scope: string;
   tasks: Task[];
   materials: Material[];
@@ -34,6 +36,7 @@ export interface Project {
   paymentTerms?: string;
   validityDays?: number;
   depositPercent?: number;
+  analysis?: ProjectAnalysis;
 }
 
 export interface Contractor {
@@ -57,6 +60,7 @@ export function emptyProject(name: string, defaults: QuoteDefaults = defaultQuot
     createdAt: now,
     updatedAt: now,
     photos: [],
+    photoIds: [],
     scope: "",
     tasks: [],
     materials: [],
