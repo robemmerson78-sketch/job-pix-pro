@@ -251,11 +251,7 @@ export function mergeAnalysis(existing: AnalysisItem[], report: AnalysisReport):
   const confirmed = existing.filter((i) => i.status === "confirmed");
   // Drop previous unconfirmed findings from this same model, and any stale
   // suggestions it left behind; keep other models' findings as they were.
-  const kept = existing.filter(
-    (i) =>
-      i.status !== "confirmed" &&
-      !(i.source === report.model || i.suggestionFor !== undefined && i.source === report.model),
-  );
+  const kept = existing.filter((i) => i.status !== "confirmed" && i.source !== report.model);
 
   const incoming: AnalysisItem[] = report.items.map((item) => {
     const clash = confirmed.find(
