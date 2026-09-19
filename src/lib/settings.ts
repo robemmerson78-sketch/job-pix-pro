@@ -76,6 +76,23 @@ export function saveQuoteDefaults(d: QuoteDefaults) {
   window.localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d));
 }
 
+/**
+ * Reads a saved preference only once the page is live on the device, so the
+ * first paint never shows a different value than the saved one.
+ */
+export function useHydratedPreferences(): Preferences {
+  const [prefs, setPrefs] = useState<Preferences>(defaultPreferences);
+  useEffect(() => {
+    const sync = () => setPrefs(loadPreferences());
+    sync();
+    window.addEventListener("cq:prefs", sync);
+    return () => window.removeEventListener("cq:prefs", sync);
+  }, []);
+  return prefs;
+}
+
+export const useCurrency = (): CurrencyCode => useHydratedPreferences().currency;
+
 /** Adds or removes the dark class based on the saved appearance choice. */
 export function applyTheme(theme: ThemeChoice) {
   if (!isBrowser()) return;

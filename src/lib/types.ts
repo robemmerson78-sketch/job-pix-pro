@@ -1,3 +1,4 @@
+import type { ProjectAnalysis } from "./analysis";
 import { defaultQuoteDefaults, loadPreferences, type QuoteDefaults } from "./settings";
 
 export type DocType = "quote" | "invoice";
