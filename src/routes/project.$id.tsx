@@ -283,9 +283,7 @@ function ProjectPage() {
                 />
                 <button
                   aria-label="Remove photo"
-                  onClick={() =>
-                    update({ photos: project.photos.filter((_, idx) => idx !== i) })
-                  }
+                  onClick={() => removePhoto(i)}
                   className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full bg-foreground text-background"
                 >
                   <X className="size-4" />
@@ -333,6 +331,8 @@ function ProjectPage() {
             The AI draft is a rough first pass — check every line and price before sending.
           </p>
         </Section>
+
+        <AnalysisPanel project={project} update={update} />
 
         {/* Scope */}
         <Section title="Scope of work">
