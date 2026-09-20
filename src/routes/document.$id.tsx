@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { getProject, loadContractor } from "@/lib/storage";
+import { useCurrency } from "@/lib/settings";
 import { money, totals, type Contractor, type Project } from "@/lib/types";
 import { defaultContractor } from "@/lib/storage";
 
@@ -34,6 +35,8 @@ function DocumentPage() {
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [c, setC] = useState<Contractor>(defaultContractor);
+  const currency = useCurrency();
+  const fmt = (n: number) => money(n, currency);
 
   useEffect(() => {
     setProject(getProject(id) ?? null);
@@ -41,6 +44,7 @@ function DocumentPage() {
   }, [id]);
 
   if (!project) return <div className="min-h-screen" />;
+
 
   const t = totals(project);
   const heading = project.type === "invoice" ? "Invoice" : "Quote";
