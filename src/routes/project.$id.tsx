@@ -26,14 +26,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AnalysisPanel } from "@/components/AnalysisPanel";
 import { draftScope } from "@/lib/scope.functions";
+import { deleteAnalysisPhotos, putAnalysisPhoto } from "@/lib/analysis-photos";
 import {
   fileToCompressedDataUrl,
   getProject,
   storeSearchUrls,
   upsertProject,
 } from "@/lib/storage";
-import { loadPreferences } from "@/lib/settings";
+import { loadPreferences, useCurrency } from "@/lib/settings";
 import { money, totals, type Material, type Project } from "@/lib/types";
 
 export const Route = createFileRoute("/project/$id")({
