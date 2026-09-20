@@ -122,15 +122,52 @@ function ProjectPage() {
   if (!project) return <div className="min-h-screen" />;
 
   const t = totals(project);
+  const fmt = (n: number) => money(n, currency);
 
   const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return;
+    const room = Math.max(0, 8 - project.photos.length);
+    const picked = Array.from(files).slice(0, room);
+    if (!picked.length) {
+      toast.error("A job holds up to 8 photos");
+      return;
+    }
     try {
-      const urls = await Promise.all(Array.from(files).map((f) => fileToCompressedDataUrl(f)));
-      update({ photos: [...project.photos, ...urls].slice(0, 8) });
+      const added = await Promise.all(
+        picked.map(async (f) => ({
+          photoId: crypto.randomUUID(),
+          display: await fileToCompressedDataUrl(f),
+          sharp: await fileToCompressedDataUrl(f, 1600),
+        })),
+      );
+
+      // The job itself is saved first, so nothing depends on the sharper copies.
+      update({
+        photos: [...project.photos, ...added.map((a) => a.display)],
+        photoIds: [...(project.photoIds ?? []), ...added.map((a) => a.photoId)],
+      });
+
+      if (loadPreferences().keepSharpPhotos) {
+        const results = await Promise.all(
+          added.map((a) => putAnalysisPhoto(a.photoId, a.sharp).catch(() => false)),
+        );
+        if (results.some((ok) => !ok)) {
+          toast.message("Saved. Analysis will use the standard photos on this device.");
+        }
+      }
     } catch {
       toast.error("Couldn't read those photos");
     }
+  };
+
+  const removePhoto = (index: number) => {
+    const ids = project.photoIds ?? [];
+    const removedId = ids[index];
+    update({
+      photos: project.photos.filter((_, idx) => idx !== index),
+      photoIds: ids.filter((_, idx) => idx !== index),
+    });
+    if (removedId) void deleteAnalysisPhotos([removedId]);
   };
 
   const runDraft = async () => {
