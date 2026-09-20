@@ -87,6 +87,7 @@ function ProjectPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [missing, setMissing] = useState(false);
   const [drafting, setDrafting] = useState(false);
+  const currency = useCurrency();
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
