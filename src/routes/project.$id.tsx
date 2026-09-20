@@ -407,7 +407,7 @@ function ProjectPage() {
                   </DropdownMenu>
                 </div>
                 <p className="mt-2 text-right text-base font-bold text-primary">
-                  {money((m.qty || 0) * (m.price || 0))}
+                  {fmt((m.qty || 0) * (m.price || 0))}
                 </p>
               </div>
             ))}
@@ -454,15 +454,15 @@ function ProjectPage() {
             </div>
           </div>
           <p className="mt-3 text-right text-lg font-bold text-primary">
-            Labor subtotal {money(t.labor)}
+            Labor subtotal {fmt(t.labor)}
           </p>
         </Section>
 
         {/* Totals */}
         <Section title="Totals">
           <div className="space-y-2 text-base">
-            <Row label="Materials" value={money(t.materials)} />
-            <Row label="Labor" value={money(t.labor)} />
+            <Row label="Materials" value={fmt(t.materials)} />
+            <Row label="Labor" value={fmt(t.labor)} />
             <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
               <Label className="label-caps">Tax / markup %</Label>
               <Input
@@ -475,12 +475,12 @@ function ProjectPage() {
                 className="h-12 w-28 text-right text-base"
               />
             </div>
-            <Row label="Tax / markup" value={money(t.tax)} />
+            <Row label="Tax / markup" value={fmt(t.tax)} />
             <div className="mt-3 border-t-2 border-attention pt-4">
               <span className="block text-xs font-semibold text-muted-foreground">Recommended price</span>
               <div className="mt-1 flex items-baseline justify-between gap-3">
                 <span className="text-lg font-bold text-primary">Total</span>
-                <span className="text-4xl font-extrabold text-primary">{money(t.total)}</span>
+                <span className="text-4xl font-extrabold text-primary">{fmt(t.total)}</span>
               </div>
             </div>
           </div>
