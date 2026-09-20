@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { getProject, loadContractor } from "@/lib/storage";
+import { useCurrency } from "@/lib/settings";
 import { money, totals, type Contractor, type Project } from "@/lib/types";
 import { defaultContractor } from "@/lib/storage";
 
@@ -34,6 +35,8 @@ function DocumentPage() {
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [c, setC] = useState<Contractor>(defaultContractor);
+  const currency = useCurrency();
+  const fmt = (n: number) => money(n, currency);
 
   useEffect(() => {
     setProject(getProject(id) ?? null);
@@ -41,6 +44,7 @@ function DocumentPage() {
   }, [id]);
 
   if (!project) return <div className="min-h-screen" />;
+
 
   const t = totals(project);
   const heading = project.type === "invoice" ? "Invoice" : "Quote";
@@ -54,10 +58,10 @@ function DocumentPage() {
       project.scope,
       "",
       ...project.materials.map(
-        (m) => `• ${m.name} ×${m.qty} — ${money((m.qty || 0) * (m.price || 0))}`,
+        (m) => `• ${m.name} ×${m.qty} — ${fmt((m.qty || 0) * (m.price || 0))}`,
       ),
-      `Labor: ${project.laborHours} hrs @ ${money(project.laborRate)} = ${money(t.labor)}`,
-      `Total: ${money(t.total)}`,
+      `Labor: ${project.laborHours} hrs @ ${fmt(project.laborRate)} = ${fmt(t.labor)}`,
+      `Total: ${fmt(t.total)}`,
     ].join("\n");
     try {
       if (navigator.share) await navigator.share({ title: `${heading} — ${project.name}`, text: lines });
@@ -161,9 +165,9 @@ function DocumentPage() {
                   <tr key={m.id} className="border-b border-border/60">
                     <td className="py-1.5 pr-2">{m.name || "—"}</td>
                     <td className="py-1.5 text-right">{m.qty}</td>
-                    <td className="py-1.5 text-right">{money(m.price || 0)}</td>
+                    <td className="py-1.5 text-right">{fmt(m.price || 0)}</td>
                     <td className="py-1.5 text-right">
-                      {money((m.qty || 0) * (m.price || 0))}
+                      {fmt((m.qty || 0) * (m.price || 0))}
                     </td>
                   </tr>
                 ))}
@@ -176,33 +180,33 @@ function DocumentPage() {
           <h2 className="text-lg font-semibold text-primary">Labor</h2>
           <div className="mt-1 flex justify-between text-sm">
             <span>
-              {project.laborHours} hrs @ {money(project.laborRate)}/hr
+              {project.laborHours} hrs @ {fmt(project.laborRate)}/hr
             </span>
-            <span>{money(t.labor)}</span>
+            <span>{fmt(t.labor)}</span>
           </div>
         </section>
 
         <section className="mt-6 ml-auto max-w-xs space-y-1.5 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Materials</span>
-            <span>{money(t.materials)}</span>
+            <span>{fmt(t.materials)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Labor</span>
-            <span>{money(t.labor)}</span>
+            <span>{fmt(t.labor)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Tax / markup ({project.taxPercent}%)</span>
-            <span>{money(t.tax)}</span>
+            <span>{fmt(t.tax)}</span>
           </div>
           <div className="mt-3 flex items-baseline justify-between border-t-2 border-attention pt-3 text-primary">
             <span className="text-lg font-bold">Total</span>
-            <span className="text-3xl font-extrabold">{money(t.total)}</span>
+            <span className="text-3xl font-extrabold">{fmt(t.total)}</span>
           </div>
           {project.depositPercent ? (
             <div className="flex justify-between pt-1 font-semibold">
               <span>Deposit due ({project.depositPercent}%)</span>
-              <span>{money((t.total * project.depositPercent) / 100)}</span>
+              <span>{fmt((t.total * project.depositPercent) / 100)}</span>
             </div>
           ) : null}
         </section>

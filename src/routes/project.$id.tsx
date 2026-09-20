@@ -26,14 +26,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AnalysisPanel } from "@/components/AnalysisPanel";
 import { draftScope } from "@/lib/scope.functions";
+import { deleteAnalysisPhotos, putAnalysisPhoto } from "@/lib/analysis-photos";
 import {
   fileToCompressedDataUrl,
   getProject,
   storeSearchUrls,
   upsertProject,
 } from "@/lib/storage";
-import { loadPreferences } from "@/lib/settings";
+import { loadPreferences, useCurrency } from "@/lib/settings";
 import { money, totals, type Material, type Project } from "@/lib/types";
 
 export const Route = createFileRoute("/project/$id")({
@@ -85,6 +87,7 @@ function ProjectPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [missing, setMissing] = useState(false);
   const [drafting, setDrafting] = useState(false);
+  const currency = useCurrency();
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
@@ -120,15 +123,52 @@ function ProjectPage() {
   if (!project) return <div className="min-h-screen" />;
 
   const t = totals(project);
+  const fmt = (n: number) => money(n, currency);
 
   const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return;
+    const room = Math.max(0, 8 - project.photos.length);
+    const picked = Array.from(files).slice(0, room);
+    if (!picked.length) {
+      toast.error("A job holds up to 8 photos");
+      return;
+    }
     try {
-      const urls = await Promise.all(Array.from(files).map((f) => fileToCompressedDataUrl(f)));
-      update({ photos: [...project.photos, ...urls].slice(0, 8) });
+      const added = await Promise.all(
+        picked.map(async (f) => ({
+          photoId: crypto.randomUUID(),
+          display: await fileToCompressedDataUrl(f),
+          sharp: await fileToCompressedDataUrl(f, 1600),
+        })),
+      );
+
+      // The job itself is saved first, so nothing depends on the sharper copies.
+      update({
+        photos: [...project.photos, ...added.map((a) => a.display)],
+        photoIds: [...(project.photoIds ?? []), ...added.map((a) => a.photoId)],
+      });
+
+      if (loadPreferences().keepSharpPhotos) {
+        const results = await Promise.all(
+          added.map((a) => putAnalysisPhoto(a.photoId, a.sharp).catch(() => false)),
+        );
+        if (results.some((ok) => !ok)) {
+          toast.message("Saved. Analysis will use the standard photos on this device.");
+        }
+      }
     } catch {
       toast.error("Couldn't read those photos");
     }
+  };
+
+  const removePhoto = (index: number) => {
+    const ids = project.photoIds ?? [];
+    const removedId = ids[index];
+    update({
+      photos: project.photos.filter((_, idx) => idx !== index),
+      photoIds: ids.filter((_, idx) => idx !== index),
+    });
+    if (removedId) void deleteAnalysisPhotos([removedId]);
   };
 
   const runDraft = async () => {
@@ -243,9 +283,7 @@ function ProjectPage() {
                 />
                 <button
                   aria-label="Remove photo"
-                  onClick={() =>
-                    update({ photos: project.photos.filter((_, idx) => idx !== i) })
-                  }
+                  onClick={() => removePhoto(i)}
                   className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full bg-foreground text-background"
                 >
                   <X className="size-4" />
@@ -293,6 +331,8 @@ function ProjectPage() {
             The AI draft is a rough first pass — check every line and price before sending.
           </p>
         </Section>
+
+        <AnalysisPanel project={project} update={update} />
 
         {/* Scope */}
         <Section title="Scope of work">
@@ -407,7 +447,7 @@ function ProjectPage() {
                   </DropdownMenu>
                 </div>
                 <p className="mt-2 text-right text-base font-bold text-primary">
-                  {money((m.qty || 0) * (m.price || 0))}
+                  {fmt((m.qty || 0) * (m.price || 0))}
                 </p>
               </div>
             ))}
@@ -454,15 +494,15 @@ function ProjectPage() {
             </div>
           </div>
           <p className="mt-3 text-right text-lg font-bold text-primary">
-            Labor subtotal {money(t.labor)}
+            Labor subtotal {fmt(t.labor)}
           </p>
         </Section>
 
         {/* Totals */}
         <Section title="Totals">
           <div className="space-y-2 text-base">
-            <Row label="Materials" value={money(t.materials)} />
-            <Row label="Labor" value={money(t.labor)} />
+            <Row label="Materials" value={fmt(t.materials)} />
+            <Row label="Labor" value={fmt(t.labor)} />
             <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
               <Label className="label-caps">Tax / markup %</Label>
               <Input
@@ -475,12 +515,12 @@ function ProjectPage() {
                 className="h-12 w-28 text-right text-base"
               />
             </div>
-            <Row label="Tax / markup" value={money(t.tax)} />
+            <Row label="Tax / markup" value={fmt(t.tax)} />
             <div className="mt-3 border-t-2 border-attention pt-4">
               <span className="block text-xs font-semibold text-muted-foreground">Recommended price</span>
               <div className="mt-1 flex items-baseline justify-between gap-3">
                 <span className="text-lg font-bold text-primary">Total</span>
-                <span className="text-4xl font-extrabold text-primary">{money(t.total)}</span>
+                <span className="text-4xl font-extrabold text-primary">{fmt(t.total)}</span>
               </div>
             </div>
           </div>
