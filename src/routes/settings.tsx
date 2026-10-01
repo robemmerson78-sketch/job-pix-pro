@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MODEL_LABELS, type ModelKey } from "@/lib/analysis";
+import { clearAnalysisPhotos } from "@/lib/analysis-photos";
 import { APP_NAME, APP_VERSION, SUPPORT_EMAIL, diagnostics, mailto } from "@/lib/app-info";
 import {
   defaultContractor,
