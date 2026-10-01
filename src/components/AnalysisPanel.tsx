@@ -332,7 +332,8 @@ export function AnalysisPanel({
                 })}
               </ul>
             </div>
-          ))}
+            );
+          })}
 
           {reportA && reportB ? <AnalysisComparison a={reportA} b={reportB} /> : null}
         </>
