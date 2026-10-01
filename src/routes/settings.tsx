@@ -516,7 +516,7 @@ function Settings() {
 
         <Section title="Contact us">
           <a
-            href={mailto(`${APP_NAME} question`, diagnostics("Settings"))}
+            href={contactHref}
             className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-sm font-semibold text-primary shadow-panel"
           >
             <Mail className="size-5 text-ai" />
