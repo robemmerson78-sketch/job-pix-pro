@@ -126,17 +126,26 @@ function Settings() {
   const [idea, setIdea] = useState("");
   const [ideaNotes, setIdeaNotes] = useState("");
   const logoRef = useRef<HTMLInputElement>(null);
+  // Built after the page is live, since it embeds device details the server doesn't have.
+  const [contactHref, setContactHref] = useState(`mailto:${SUPPORT_EMAIL}`);
 
   useEffect(() => {
     setC(loadContractor());
     setDefaults(loadQuoteDefaults());
     setPrefs(loadPreferences());
+    setContactHref(mailto(`${APP_NAME} question`, diagnostics("Settings")));
   }, []);
 
   const updatePrefs = (patch: Partial<Preferences>) => {
     const next = { ...prefs, ...patch };
     setPrefs(next);
     savePreferences(next);
+    if (patch.keepSharpPhotos === false) {
+      // Only the separate analysis-copy store is cleared; job photos are untouched.
+      void clearAnalysisPhotos();
+      toast.success("Sharper copies removed — your job photos are unchanged");
+      return;
+    }
     toast.success("Preference saved");
   };
 

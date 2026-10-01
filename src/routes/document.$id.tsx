@@ -156,7 +156,7 @@ function DocumentPage() {
                 <tr className="border-b border-border text-left">
                   <th className="label-caps py-1.5">Item</th>
                   <th className="label-caps py-1.5 text-right">Qty</th>
-                  <th className="label-caps py-1.5 text-right">Unit</th>
+                  <th className="label-caps py-1.5 text-right">Unit Price</th>
                   <th className="label-caps py-1.5 text-right">Amount</th>
                 </tr>
               </thead>
