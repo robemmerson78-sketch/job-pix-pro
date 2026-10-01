@@ -180,12 +180,72 @@ export function AnalysisPanel({
             confirmed by you. Nothing reaches the customer document until you add it.
           </p>
 
-          {groups.map((group) => (
-            <div key={group.category} className="mt-4">
-              <div className="label-caps">{CATEGORY_LABELS[group.category]}</div>
+          {groups.map((group) => {
+            const isChecklist = group.category === "question";
+            return (
+            <div
+              key={group.category}
+              className={isChecklist ? "mt-5 rounded-lg border-l-4 border-attention bg-muted/40 p-3" : "mt-4"}
+            >
+              <div className="label-caps">
+                {isChecklist ? "On-site checklist — confirm with the customer" : CATEGORY_LABELS[group.category]}
+              </div>
+              {isChecklist ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Questions to check before pricing. These never go on the quote.
+                </p>
+              ) : null}
               <ul className="mt-1 space-y-2">
                 {group.items.map((item) => {
                   const suggestions = analysis.items.filter((s) => s.suggestionFor === item.id);
+                  if (isChecklist) {
+                    const done = item.status === "confirmed";
+                    return (
+                      <li key={item.id} className="flex items-start gap-2 rounded-md bg-card p-2.5">
+                        <button
+                          type="button"
+                          aria-label={done ? "Mark as not checked" : "Mark as checked"}
+                          onClick={() =>
+                            patchItem(item.id, done
+                              ? { status: "unknown", source: "contractor" }
+                              : { status: "confirmed", source: "contractor" })
+                          }
+                          className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded border-2 ${
+                            done ? "border-ai bg-ai text-primary-foreground" : "border-border"
+                          }`}
+                        >
+                          {done ? <Check className="size-4" /> : null}
+                        </button>
+                        {editing === item.id ? (
+                          <Input
+                            autoFocus
+                            className="h-11 flex-1 text-base"
+                            defaultValue={item.text}
+                            onBlur={(e) => {
+                              patchItem(item.id, { text: e.target.value, source: "contractor" });
+                              setEditing(null);
+                            }}
+                          />
+                        ) : (
+                          <p className={`flex-1 text-sm leading-relaxed ${done ? "text-muted-foreground line-through" : ""}`}>
+                            {item.text}
+                          </p>
+                        )}
+                        <Button variant="ghost" className="h-9 px-2 text-xs" onClick={() => setEditing(item.id)}>
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Remove question"
+                          className="size-9 text-muted-foreground"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </li>
+                    );
+                  }
                   return (
                     <li key={item.id} className="rounded-md border border-border p-2.5">
                       {editing === item.id ? (
@@ -272,7 +332,8 @@ export function AnalysisPanel({
                 })}
               </ul>
             </div>
-          ))}
+            );
+          })}
 
           {reportA && reportB ? <AnalysisComparison a={reportA} b={reportB} /> : null}
         </>

@@ -32,7 +32,7 @@ export function AnalysisComparison({ a, b }: { a: AnalysisReport; b: AnalysisRep
       {result.agreed.length ? (
         <div className="mt-3">
           <div className="label-caps flex items-center gap-1">
-            <Check className="size-3.5 text-ai" /> Both models agree
+            <Check className="size-3.5 text-ai" /> Both models agree — still review before using
           </div>
           <ul className="mt-1 text-sm">
             {result.agreed.map((p) => (

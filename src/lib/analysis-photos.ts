@@ -78,3 +78,14 @@ export async function deleteAnalysisPhotos(ids: string[]): Promise<void> {
     /* nothing to clean up */
   }
 }
+
+/** Removes every sharper analysis copy. Only this store is touched — never job data. */
+export async function clearAnalysisPhotos(): Promise<void> {
+  const db = await openDb();
+  if (!db) return;
+  try {
+    db.transaction(STORE, "readwrite").objectStore(STORE).clear();
+  } catch {
+    /* nothing to clear */
+  }
+}

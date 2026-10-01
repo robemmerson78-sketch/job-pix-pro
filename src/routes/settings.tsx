@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MODEL_LABELS, type ModelKey } from "@/lib/analysis";
+import { clearAnalysisPhotos } from "@/lib/analysis-photos";
 import { APP_NAME, APP_VERSION, SUPPORT_EMAIL, diagnostics, mailto } from "@/lib/app-info";
 import {
   defaultContractor,
@@ -126,17 +127,26 @@ function Settings() {
   const [idea, setIdea] = useState("");
   const [ideaNotes, setIdeaNotes] = useState("");
   const logoRef = useRef<HTMLInputElement>(null);
+  // Built after the page is live, since it embeds device details the server doesn't have.
+  const [contactHref, setContactHref] = useState(`mailto:${SUPPORT_EMAIL}`);
 
   useEffect(() => {
     setC(loadContractor());
     setDefaults(loadQuoteDefaults());
     setPrefs(loadPreferences());
+    setContactHref(mailto(`${APP_NAME} question`, diagnostics("Settings")));
   }, []);
 
   const updatePrefs = (patch: Partial<Preferences>) => {
     const next = { ...prefs, ...patch };
     setPrefs(next);
     savePreferences(next);
+    if (patch.keepSharpPhotos === false) {
+      // Only the separate analysis-copy store is cleared; job photos are untouched.
+      void clearAnalysisPhotos();
+      toast.success("Sharper copies removed — your job photos are unchanged");
+      return;
+    }
     toast.success("Preference saved");
   };
 
@@ -506,7 +516,7 @@ function Settings() {
 
         <Section title="Contact us">
           <a
-            href={mailto(`${APP_NAME} question`, diagnostics("Settings"))}
+            href={contactHref}
             className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-sm font-semibold text-primary shadow-panel"
           >
             <Mail className="size-5 text-ai" />
