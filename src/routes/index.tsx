@@ -21,7 +21,7 @@ import {
   loadProjects,
   upsertProject,
 } from "@/lib/storage";
-import { loadQuoteDefaults } from "@/lib/settings";
+import { loadQuoteDefaults, useCurrency } from "@/lib/settings";
 import { emptyProject, money, totals, type Project } from "@/lib/types";
 
 export const Route = createFileRoute("/")({
@@ -48,6 +48,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const navigate = useNavigate();
+  const currency = useCurrency();
   const [projects, setProjects] = useState<Project[]>([]);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -99,7 +100,7 @@ function Home() {
           </div>
           <div className="p-3.5 sm:p-4">
             <WalletCards className="mb-2 size-4 text-attention" />
-            <p className="truncate text-xl font-extrabold text-primary">{money(projectValue)}</p>
+            <p className="truncate text-xl font-extrabold text-primary">{money(projectValue, currency)}</p>
             <p className="mt-0.5 text-xs font-medium text-muted-foreground">Job value</p>
           </div>
         </section>
@@ -166,7 +167,7 @@ function Home() {
                     </span>
                     <span className="text-right">
                       <span className="block text-lg font-extrabold text-primary">
-                        {money(t.total)}
+                        {money(t.total, currency)}
                       </span>
                       <span
                         className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
