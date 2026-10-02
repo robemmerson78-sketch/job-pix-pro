@@ -109,7 +109,7 @@ async function runOpenai(
 ): Promise<string> {
   const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
     method: "POST",
-    signal,
+    signal: signal ?? null,
     headers: {
       "Content-Type": "application/json",
       "Lovable-API-Key": key,
