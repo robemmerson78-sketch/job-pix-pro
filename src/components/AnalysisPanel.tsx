@@ -1,19 +1,16 @@
-import { useState } from "react";
-import { Check, Loader2, ScanSearch, SquarePlus, Trash2, Users } from "lucide-react";
+import { useRef, useState } from "react";
+import { Check, Loader2, ScanSearch, Square, SquarePlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { AnalysisComparison } from "@/components/AnalysisComparison";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   CATEGORY_LABELS,
-  MODEL_LABELS,
   MODEL_PHOTO_LIMITS,
   STATUS_LABELS,
   groupByCategory,
   itemToLine,
   mergeAnalysis,
-  otherModel,
   statusCounts,
   toReport,
   type AnalysisItem,
@@ -42,25 +39,35 @@ export function AnalysisPanel({
   update: (patch: Partial<Project>) => void;
 }) {
   const prefs = useHydratedPreferences();
-  const first = prefs.analysisModel;
-  const second = otherModel(first);
-  const [running, setRunning] = useState<ModelKey | null>(null);
+  const model: ModelKey = "openai";
+  const [running, setRunning] = useState(false);
+  const runRef = useRef<{ id: number; ctrl: AbortController } | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
 
   const analysis: ProjectAnalysis = project.analysis ?? { reports: {}, items: [] };
   const photoCount = project.photos.length;
-  const limit = Math.min(MODEL_PHOTO_LIMITS[first], MODEL_PHOTO_LIMITS[second]);
+  const limit = MODEL_PHOTO_LIMITS[model];
   const excluded = Math.max(0, photoCount - limit);
 
   const setAnalysis = (next: ProjectAnalysis) => update({ analysis: next });
 
-  const run = async (model: ModelKey) => {
+  const stop = () => {
+    runRef.current?.ctrl.abort();
+    runRef.current = null;
+    setRunning(false);
+    toast("Analysis stopped — nothing was changed");
+  };
+
+  const run = async () => {
     if (!photoCount) {
       toast.error("Add at least one photo first");
       return;
     }
-    setRunning(model);
+    const ctrl = new AbortController();
+    const me = { id: Date.now(), ctrl };
+    runRef.current = me;
+    setRunning(true);
     try {
       const ids = project.photoIds ?? [];
       const sharp = ids.length ? await getAnalysisPhotos(ids) : {};
@@ -72,10 +79,13 @@ export function AnalysisPanel({
         data: {
           photos,
           model,
-          hint: project.scope || undefined,
+          hint: project.jobNotes?.trim() || undefined,
           units: prefs.units,
         },
+        signal: ctrl.signal,
       });
+      // Stopped (or superseded) while waiting: ignore the late result.
+      if (runRef.current !== me) return;
 
       const report = toReport(raw, model, photos.length);
       const items = mergeAnalysis(analysis.items, report);
@@ -83,15 +93,19 @@ export function AnalysisPanel({
 
       const counts = statusCounts(report.items);
       setSummary(
-        `${MODEL_LABELS[model]} analysed ${photos.length} of ${photoCount} photo${
+        `Analysed ${photos.length} of ${photoCount} photo${
           photoCount === 1 ? "" : "s"
         } — ${counts.observed} observed, ${counts.estimated} estimated, ${counts.unknown} unknown.`,
       );
       toast.success("Analysis ready — review and confirm each line");
     } catch (e) {
+      if (runRef.current !== me) return;
       toast.error(e instanceof Error ? e.message : "Photo analysis failed");
     } finally {
-      setRunning(null);
+      if (runRef.current === me) {
+        runRef.current = null;
+        setRunning(false);
+      }
     }
   };
 
@@ -125,8 +139,6 @@ export function AnalysisPanel({
 
   const groups = groupByCategory(analysis.items);
   const counts = statusCounts(analysis.items);
-  const reportA = analysis.reports[first];
-  const reportB = analysis.reports[second];
 
   return (
     <section className="mt-5 rounded-lg border border-border bg-card p-4 shadow-panel sm:p-5">
@@ -142,33 +154,26 @@ export function AnalysisPanel({
             : `${photoCount} photos ready — photos 1–${limit} will be analysed, photos ${limit + 1}–${photoCount} will not.`}
       </p>
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <Button
-          variant="action"
-          className="h-14 text-base"
-          disabled={running !== null || photoCount === 0}
-          onClick={() => run(first)}
-        >
-          {running === first ? (
-            <Loader2 className="size-5 animate-spin" />
-          ) : (
-            <ScanSearch className="size-5" />
-          )}
-          {running === first ? "Analysing photos…" : `Analyse photos (${MODEL_LABELS[first]})`}
-        </Button>
-        <Button
-          variant="secondary"
-          className="h-14 text-base"
-          disabled={running !== null || photoCount === 0}
-          onClick={() => run(second)}
-        >
-          {running === second ? (
-            <Loader2 className="size-5 animate-spin" />
-          ) : (
-            <Users className="size-5" />
-          )}
-          {running === second ? "Second opinion…" : `Second opinion (${MODEL_LABELS[second]})`}
-        </Button>
+      <div className="mt-3 grid gap-2">
+        {running ? (
+          <div className="flex gap-2">
+            <div className="flex h-14 flex-1 items-center justify-center gap-2 rounded-md bg-secondary text-sm font-semibold text-primary">
+              <Loader2 className="size-5 animate-spin" /> Analysing photos…
+            </div>
+            <Button variant="outline" className="h-14 px-5 text-base" onClick={stop}>
+              <Square className="size-4" /> Stop
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="action"
+            className="h-14 text-base"
+            disabled={photoCount === 0}
+            onClick={run}
+          >
+            <ScanSearch className="size-5" /> Analyse photos
+          </Button>
+        )}
       </div>
 
       {summary ? <p className="mt-2 text-xs text-muted-foreground">{summary}</p> : null}
@@ -322,7 +327,7 @@ export function AnalysisPanel({
                           className="mt-2 rounded-md bg-muted/60 p-2 text-xs text-muted-foreground"
                         >
                           <span className="font-semibold">
-                            {MODEL_LABELS[s.source as ModelKey] ?? "AI"} suggests:
+                            AI suggests:
                           </span>{" "}
                           {itemToLine(s)} — your confirmed line above is kept.
                         </div>
@@ -335,7 +340,6 @@ export function AnalysisPanel({
             );
           })}
 
-          {reportA && reportB ? <AnalysisComparison a={reportA} b={reportB} /> : null}
         </>
       ) : null}
     </section>
