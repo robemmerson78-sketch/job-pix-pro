@@ -26,8 +26,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AnalysisPanel } from "@/components/AnalysisPanel";
-import { BackToTop } from "@/components/BackToTop";
 import { draftScope } from "@/lib/scope.functions";
 import { deleteAnalysisPhotos, putAnalysisPhoto } from "@/lib/analysis-photos";
 import {
@@ -348,8 +346,6 @@ function ProjectPage() {
           </p>
         </Section>
 
-        <AnalysisPanel project={project} update={update} />
-        <BackToTop />
 
         {/* Scope */}
         <Section title="Scope of work">
