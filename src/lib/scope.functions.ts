@@ -19,7 +19,14 @@ Return STRICT JSON only, matching:
 }
 Rules: 3-8 tasks. 3-10 materials with realistic rough quantities. "price" is a
 rough US/CA retail guess per unit in dollars (a number, 0 if unsure). Be concrete
-about sizes/specs so the item can be searched at a hardware store.`;
+about sizes/specs so the item can be searched at a hardware store.
+
+Contractor notes vs photos:
+- The contractor's notes are instructions. Include work and materials they ask for even
+  when not visible in the photos (e.g. a new vanity or mirror).
+- Never say something is visible or "shown" if it only comes from the notes.
+- Use the photos for existing conditions; do not contradict the notes.
+Keep it concise: short task lines, no essay, no repeating the notes back.`;
 
 export const draftScope = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Input.parse(data))
@@ -31,7 +38,7 @@ export const draftScope = createServerFn({ method: "POST" })
       {
         type: "text",
         text: data.hint?.trim()
-          ? `Job notes from the contractor: ${data.hint.trim()}`
+          ? `Contractor job description / notes (instructions, may include work not visible in the photos):\n${data.hint.trim()}`
           : "Draft the scope of work from these photos.",
       },
       ...data.photos.map((url) => ({ type: "image_url", image_url: { url } })),
