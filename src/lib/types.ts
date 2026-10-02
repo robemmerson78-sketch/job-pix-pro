@@ -33,6 +33,8 @@ export interface Project {
   laborRate: number;
   taxPercent: number;
   notes: string;
+  /** Internal contractor job description / notes; never shown on the customer document. */
+  jobNotes?: string;
   paymentTerms?: string;
   validityDays?: number;
   depositPercent?: number;

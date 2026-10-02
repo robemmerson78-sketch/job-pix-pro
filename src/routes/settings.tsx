@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MODEL_LABELS, type ModelKey } from "@/lib/analysis";
 import { clearAnalysisPhotos } from "@/lib/analysis-photos";
 import { APP_NAME, APP_VERSION, SUPPORT_EMAIL, diagnostics, mailto } from "@/lib/app-info";
 import {
@@ -396,20 +395,9 @@ function Settings() {
 
         <Section
           title="Photo analysis"
-          description="Which AI looks at your photos first. The other one is always available as a second opinion."
+          description="Photo analysis settings for this device."
         >
           <div className="space-y-5 rounded-lg border border-border bg-card p-5 shadow-panel">
-            <div className="space-y-2">
-              <Label className="label-caps">Analyse with</Label>
-              <Choice<ModelKey>
-                value={prefs.analysisModel}
-                onChange={(analysisModel) => updatePrefs({ analysisModel })}
-                options={[
-                  { value: "openai", label: MODEL_LABELS.openai },
-                  { value: "google", label: MODEL_LABELS.google },
-                ]}
-              />
-            </div>
             <div className="space-y-2">
               <Label className="label-caps">Keep sharper photo copies</Label>
               <Choice<"yes" | "no">

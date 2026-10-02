@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AnalysisPanel } from "@/components/AnalysisPanel";
+import { BackToTop } from "@/components/BackToTop";
 import { draftScope } from "@/lib/scope.functions";
 import { deleteAnalysisPhotos, putAnalysisPhoto } from "@/lib/analysis-photos";
 import {
@@ -182,7 +183,7 @@ function ProjectPage() {
       const result = await draftScope({
         data: {
           photos: project.photos.slice(0, 4),
-          hint: [project.scope, `Use ${units} measurements.`].filter(Boolean).join("\n"),
+          hint: [project.jobNotes, project.scope, `Use ${units} measurements.`].filter(Boolean).join("\n"),
         },
       });
       update({
@@ -319,6 +320,21 @@ function ProjectPage() {
               <ImagePlus className="size-5" /> Upload
             </Button>
           </div>
+          <div className="mt-3 space-y-1.5">
+            <Label className="label-caps" htmlFor="job-notes">
+              Contractor job description / notes
+            </Label>
+            <Textarea
+              id="job-notes"
+              value={project.jobNotes ?? ""}
+              onChange={(e) => update({ jobNotes: e.target.value })}
+              className="min-h-24 text-base"
+              placeholder="What the customer wants, what you saw on site, sizes you measured…"
+            />
+            <p className="text-xs text-muted-foreground">
+              For you only — used as context for the AI, never shown to the client.
+            </p>
+          </div>
           <Button variant="action" className="mt-2 h-14 w-full text-base" onClick={runDraft} disabled={drafting}>
             {drafting ? (
               <Loader2 className="size-5 animate-spin" />
@@ -333,6 +349,7 @@ function ProjectPage() {
         </Section>
 
         <AnalysisPanel project={project} update={update} />
+        <BackToTop />
 
         {/* Scope */}
         <Section title="Scope of work">

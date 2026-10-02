@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 const CATEGORIES = [
@@ -16,7 +17,7 @@ const CATEGORIES = [
 
 const Input = z.object({
   photos: z.array(z.string()).min(1).max(8),
-  model: z.enum(["openai", "google"]),
+  model: z.literal("openai").default("openai"),
   hint: z.string().optional(),
   units: z.enum(["imperial", "metric"]).default("imperial"),
 });
@@ -55,11 +56,17 @@ Tag every single finding honestly:
 - "unknown" — cannot be determined from the photos.
 
 Use ${units} measurements. Put numeric amounts in "qty" with a short "unit" (e.g. "sq ft",
-"linear ft", "each"), or null when there is no number. Be concrete and specific.`;
+"linear ft", "each"), or null when there is no number.
+
+Be concise. Each finding is a short phrase or one short sentence (aim under 15 words).
+No narrative, no essays, no explaining obvious details, no repeating the contractor's notes.
+One fact per finding; do not duplicate findings across categories.
+Questions are short, practical questions to ask the customer or check on site.
+Never include prices or costs.`;
 
 const userText = (hint?: string) =>
   hint?.trim()
-    ? `Analyse every photo provided. Job notes from the contractor: ${hint.trim()}`
+    ? `Analyse every photo provided. Contractor job description / notes (context only, do not repeat): ${hint.trim()}`
     : "Analyse every photo provided.";
 
 const jsonSchema = {
@@ -94,39 +101,15 @@ function gatewayError(status: number, body: string): Error {
   return new Error(`Photo analysis failed (${status}): ${body.slice(0, 300)}`);
 }
 
-/** Google vision path — chat completions. */
-async function runGoogle(key: string, data: z.infer<typeof Input>): Promise<string> {
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": key,
-      "X-Lovable-AIG-SDK": "fetch",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3.6-flash",
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system(data.units) },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: `${userText(data.hint)} Return JSON only.` },
-            ...data.photos.map((url) => ({ type: "image_url", image_url: { url } })),
-          ],
-        },
-      ],
-    }),
-  });
-  if (!res.ok) throw gatewayError(res.status, await res.text());
-  const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  return json.choices?.[0]?.message?.content ?? "";
-}
-
 /** OpenAI vision path — Responses API, streamed and consumed server-side. */
-async function runOpenai(key: string, data: z.infer<typeof Input>): Promise<string> {
+async function runOpenai(
+  key: string,
+  data: z.infer<typeof Input>,
+  signal?: AbortSignal,
+): Promise<string> {
   const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
     method: "POST",
+    signal: signal ?? null,
     headers: {
       "Content-Type": "application/json",
       "Lovable-API-Key": key,
@@ -197,7 +180,13 @@ export const analyzePhotos = createServerFn({ method: "POST" })
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
-    const text = data.model === "openai" ? await runOpenai(key, data) : await runGoogle(key, data);
+    let signal: AbortSignal | undefined;
+    try {
+      signal = getRequest().signal;
+    } catch {
+      signal = undefined;
+    }
+    const text = await runOpenai(key, data, signal);
     const cleaned = text
       .replace(/^```(?:json)?/i, "")
       .replace(/```$/, "")
