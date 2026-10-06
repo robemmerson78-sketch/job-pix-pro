@@ -3,6 +3,17 @@ import { useEffect, useState } from "react";
 export type ThemeChoice = "system" | "light" | "dark";
 export type CurrencyCode = "CAD" | "USD";
 export type UnitSystem = "imperial" | "metric";
+export type SupplierKey = "homehardware" | "rona" | "homedepot";
+
+export const SUPPLIERS: Record<SupplierKey, { label: string; search: (q: string) => string }> = {
+  homehardware: {
+    label: "Home Hardware Building Centre",
+    search: (q) => `https://www.homehardware.ca/en/search/?q=${q}`,
+  },
+  rona: { label: "RONA", search: (q) => `https://www.rona.ca/en/search/?query=${q}` },
+  homedepot: { label: "Home Depot", search: (q) => `https://www.homedepot.ca/search?q=${q}` },
+};
+export const SUPPLIER_KEYS = Object.keys(SUPPLIERS) as SupplierKey[];
 
 export interface Preferences {
   theme: ThemeChoice;
@@ -10,6 +21,8 @@ export interface Preferences {
   units: UnitSystem;
   /** Keep sharper analysis-only photo copies on this device. */
   keepSharpPhotos: boolean;
+  /** Single supplier that material pricing is based on. */
+  supplier: SupplierKey;
 }
 
 export interface QuoteDefaults {
@@ -28,6 +41,7 @@ export const defaultPreferences: Preferences = {
   currency: "CAD",
   units: "imperial",
   keepSharpPhotos: true,
+  supplier: "homehardware",
 };
 
 export const defaultQuoteDefaults: QuoteDefaults = {
@@ -44,7 +58,8 @@ export function loadPreferences(): Preferences {
   if (!isBrowser()) return defaultPreferences;
   try {
     const raw = window.localStorage.getItem(PREFS_KEY);
-    return raw ? { ...defaultPreferences, ...JSON.parse(raw) } : defaultPreferences;
+    const p: Preferences = raw ? { ...defaultPreferences, ...JSON.parse(raw) } : defaultPreferences;
+    return SUPPLIERS[p.supplier] ? p : { ...p, supplier: defaultPreferences.supplier };
   } catch {
     return defaultPreferences;
   }
