@@ -1,3 +1,4 @@
+import { SUPPLIERS, type SupplierKey } from "./settings";
 import { deleteAnalysisPhotos } from "./analysis-photos";
 import type { Contractor, Project } from "./types";
 
@@ -109,11 +110,6 @@ export function fileToCompressedDataUrl(file: File, max = 1024): Promise<string>
   });
 }
 
-export const storeSearchUrls = (term: string) => {
-  const q = encodeURIComponent(term.trim());
-  return [
-    { label: "Home Depot", url: `https://www.homedepot.com/s/${q}` },
-    { label: "Rona", url: `https://www.rona.ca/en/search/?query=${q}` },
-    { label: "Home Hardware", url: `https://www.homehardware.ca/en/search/?q=${q}` },
-  ];
-};
+/** Search link for one material at the job's single pricing supplier. */
+export const supplierSearchUrl = (term: string, supplier: SupplierKey) =>
+  SUPPLIERS[supplier].search(encodeURIComponent(term.trim()));

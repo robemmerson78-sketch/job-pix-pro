@@ -19,22 +19,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { draftScope } from "@/lib/scope.functions";
 import { deleteAnalysisPhotos, putAnalysisPhoto } from "@/lib/analysis-photos";
 import {
   fileToCompressedDataUrl,
   getProject,
-  storeSearchUrls,
+  supplierSearchUrl,
   upsertProject,
 } from "@/lib/storage";
-import { loadPreferences, useCurrency } from "@/lib/settings";
+import { SUPPLIERS, loadPreferences, useCurrency, useHydratedPreferences } from "@/lib/settings";
 import { money, totals, type Material, type Project } from "@/lib/types";
 
 export const Route = createFileRoute("/project/$id")({
@@ -87,6 +80,7 @@ function ProjectPage() {
   const [missing, setMissing] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const currency = useCurrency();
+  const prefs = useHydratedPreferences();
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
@@ -123,6 +117,8 @@ function ProjectPage() {
 
   const t = totals(project);
   const fmt = (n: number) => money(n, currency);
+  // Jobs keep the supplier they were created with; older jobs follow the current default.
+  const supplier = project.supplier ?? prefs.supplier;
 
   const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -178,10 +174,11 @@ function ProjectPage() {
     setDrafting(true);
     try {
       const units = loadPreferences().units;
+      const supplierName = SUPPLIERS[supplier].label;
       const result = await draftScope({
         data: {
           photos: project.photos.slice(0, 4),
-          hint: [project.jobNotes, project.scope, `Use ${units} measurements.`].filter(Boolean).join("\n"),
+          hint: [project.jobNotes, project.scope, `Use ${units} measurements.`, `Price materials as rough per-unit retail at ${supplierName}.`].filter(Boolean).join("\n"),
         },
       });
       update({
@@ -394,6 +391,9 @@ function ProjectPage() {
 
         {/* Materials */}
         <Section title="Materials">
+          <p className="-mt-1 mb-3 text-xs text-muted-foreground">
+            Based on {SUPPLIERS[supplier].label} pricing. "Check price" opens the item on their site.
+          </p>
           <div className="space-y-3">
             {project.materials.map((m) => (
               <div key={m.id} className="rounded-lg border border-border p-3">
@@ -441,23 +441,22 @@ function ProjectPage() {
                       className="h-11 text-base"
                     />
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="secondary" className="h-11" disabled={!m.name.trim()}>
-                        <Search className="size-4" /> Price
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Search this item at</DropdownMenuLabel>
-                      {storeSearchUrls(m.name).map((s) => (
-                        <DropdownMenuItem key={s.label} asChild>
-                          <a href={s.url} target="_blank" rel="noopener noreferrer">
-                            {s.label}
-                          </a>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+<Button variant="secondary" className="h-11" disabled={!m.name.trim()} asChild={!!m.name.trim()}>
+                    {m.name.trim() ? (
+                      <a
+                        href={supplierSearchUrl(m.name, supplier)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Check price at ${SUPPLIERS[supplier].label}`}
+                      >
+                        <Search className="size-4" /> Check price
+                      </a>
+                    ) : (
+                      <>
+                        <Search className="size-4" /> Check price
+                      </>
+                    )}
+                  </Button>
                 </div>
                 <p className="mt-2 text-right text-base font-bold text-primary">
                   {fmt((m.qty || 0) * (m.price || 0))}

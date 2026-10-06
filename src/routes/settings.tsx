@@ -23,7 +23,10 @@ import {
   loadQuoteDefaults,
   savePreferences,
   saveQuoteDefaults,
+  SUPPLIERS,
+  SUPPLIER_KEYS,
   type CurrencyCode,
+  type SupplierKey,
   type Preferences,
   type QuoteDefaults,
   type ThemeChoice,
@@ -378,6 +381,28 @@ function Settings() {
                   { value: "USD", label: "USD" },
                 ]}
               />
+            </div>
+            <div className="space-y-2">
+              <Label className="label-caps">Default supplier</Label>
+              <div className="grid gap-2">
+                {SUPPLIER_KEYS.map((k: SupplierKey) => (
+                  <Button
+                    key={k}
+                    variant="outline"
+                    className={`h-11 justify-start text-sm font-semibold ${
+                      prefs.supplier === k
+                        ? "border-ai bg-secondary text-primary shadow-none"
+                        : "border-border bg-background text-muted-foreground"
+                    }`}
+                    onClick={() => updatePrefs({ supplier: k })}
+                  >
+                    {SUPPLIERS[k].label}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                New jobs price materials against this store.
+              </p>
             </div>
             <div className="space-y-2">
               <Label className="label-caps">Measurements</Label>

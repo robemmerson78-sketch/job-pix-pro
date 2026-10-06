@@ -1,4 +1,9 @@
-import { defaultQuoteDefaults, loadPreferences, type QuoteDefaults } from "./settings";
+import {
+  defaultQuoteDefaults,
+  loadPreferences,
+  type QuoteDefaults,
+  type SupplierKey,
+} from "./settings";
 
 export type DocType = "quote" | "invoice";
 
@@ -34,6 +39,8 @@ export interface Project {
   notes: string;
   /** Internal contractor job description / notes; never shown on the customer document. */
   jobNotes?: string;
+  /** Supplier this job's material pricing is based on; set from the default when created. */
+  supplier?: SupplierKey;
   paymentTerms?: string;
   validityDays?: number;
   depositPercent?: number;
@@ -71,6 +78,7 @@ export function emptyProject(name: string, defaults: QuoteDefaults = defaultQuot
     paymentTerms: defaults.paymentTerms,
     validityDays: defaults.validityDays,
     depositPercent: defaults.depositPercent,
+    supplier: loadPreferences().supplier,
   };
 }
 
