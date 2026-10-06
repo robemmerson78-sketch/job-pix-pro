@@ -80,6 +80,7 @@ function ProjectPage() {
   const [missing, setMissing] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const currency = useCurrency();
+  const prefs = useHydratedPreferences();
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
@@ -116,6 +117,8 @@ function ProjectPage() {
 
   const t = totals(project);
   const fmt = (n: number) => money(n, currency);
+  // Jobs keep the supplier they were created with; older jobs follow the current default.
+  const supplier = project.supplier ?? prefs.supplier;
 
   const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return;
