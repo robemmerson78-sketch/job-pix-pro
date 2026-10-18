@@ -178,24 +178,21 @@ function ProjectPage() {
       const result = await draftScope({
         data: {
           photos: project.photos.slice(0, 4),
-          hint: [project.jobNotes, project.scope, `Use ${units} measurements.`, `Price materials as rough per-unit retail at ${supplierName}.`].filter(Boolean).join("\n"),
+          // Previous scope is deliberately NOT sent back, so regeneration replaces it instead of echoing it.
+          hint: [project.jobNotes, `Use ${units} measurements.`, `Price materials as rough per-unit retail at ${supplierName}.`].filter(Boolean).join("\n"),
         },
       });
+      // Keep existing materials (prices/edits untouched); only add AI items not already listed.
+      const have = new Set(project.materials.map((m) => m.name.trim().toLowerCase()));
+      const newMaterials = result.materials
+        .filter((m) => m.name.trim() && !have.has(m.name.trim().toLowerCase()))
+        .map((m) => ({ id: uid(), name: m.name, qty: m.qty || 1, price: m.price || 0 }));
       update({
         scope: result.description || project.scope,
-        tasks: [
-          ...project.tasks,
-          ...result.tasks.map((text) => ({ id: uid(), text })),
-        ],
-        materials: [
-          ...project.materials,
-          ...result.materials.map((m) => ({
-            id: uid(),
-            name: m.name,
-            qty: m.qty || 1,
-            price: m.price || 0,
-          })),
-        ],
+        tasks: result.tasks.length
+          ? result.tasks.map((text) => ({ id: uid(), text }))
+          : project.tasks,
+        materials: [...project.materials, ...newMaterials],
       });
       toast.success("Draft scope added — edit anything you like");
     } catch (e) {
