@@ -40,7 +40,23 @@
 
 **Older jobs:** existing lines have no tag, so they're treated as the contractor's and kept. Duplicates already in a job won't be removed automatically. The contractor deletes them once by hand.
 
-**Assumption to confirm:** an edited description is kept, as in step 3. If you'd rather every redraft replace the description, that's a one-line change.
+## Ownership rule (approved)
+
+AI content can be replaced on a redraft only while nobody has edited it. Once the contractor edits it, it belongs to them and is kept exactly as is on every later draft. What counts as an edit:
+
+| Item | Becomes the contractor's when | On a successful redraft |
+|---|---|---|
+| Scope of work text | any edit to the description box | kept word for word; the message says "Your edited scope was kept" |
+| Task | its text is edited, or it was added with "Add task" | kept as is |
+| Material | its name, qty or unit price is edited, or it was added with "Add material" | kept as is: name, qty and price |
+| Untouched AI scope, task or material | never edited | replaced by the fresh AI results |
+| Contractor job description / notes | always the contractor's | never cleared or changed by the app |
+| Photos, labour hours and rate, tax, supplier, client and address, quote notes, payment terms, deposit, validity, document type | always the contractor's | never touched |
+
+- Deleting an AI line removes it. It only comes back if a later draft suggests it again.
+- **When the notes change:** the old AI results are only marked out of date, using the hint in step 4. Nothing is cleared until a new draft succeeds.
+- **When a draft fails:** nothing changes, and the contractor can try again.
+- **No pile-up:** each successful draft replaces all untouched AI lines. Repeating it with the same notes can't stack old suggestions or copies.
 
 ## Technical details
 
