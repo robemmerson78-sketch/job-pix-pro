@@ -11,7 +11,7 @@ export interface Task {
   id: string;
   text: string;
   /** Untouched AI suggestion; removed once the contractor edits it. */
-  ai?: true;
+  ai?: true | undefined;
 }
 
 export interface Material {
@@ -20,7 +20,7 @@ export interface Material {
   qty: number;
   price: number;
   /** Untouched AI suggestion; removed once the contractor edits it. */
-  ai?: true;
+  ai?: true | undefined;
 }
 
 export interface Project {
@@ -46,7 +46,7 @@ export interface Project {
   /** Notes sent with the last successful AI draft. */
   lastDraftNotes?: string;
   /** True while the scope text is the AI's, unedited. */
-  scopeFromAi?: boolean;
+  scopeFromAi?: boolean | undefined;
   /** Supplier this job's material pricing is based on; set from the default when created. */
   supplier?: SupplierKey;
   paymentTerms?: string;
