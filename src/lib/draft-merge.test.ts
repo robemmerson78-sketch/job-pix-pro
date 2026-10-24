@@ -1,3 +1,4 @@
+// @ts-nocheck -- run with `bun test`; bun:test types are not installed in this project.
 import { describe, expect, test } from "bun:test";
 import { draftIsStale, mergeDraft, type DraftResult } from "./draft-merge";
 import type { Project } from "./types";
