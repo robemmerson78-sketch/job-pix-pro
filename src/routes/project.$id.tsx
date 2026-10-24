@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { draftScope } from "@/lib/scope.functions";
+import { draftIsStale, mergeDraft } from "@/lib/draft-merge";
 import { deleteAnalysisPhotos, putAnalysisPhoto } from "@/lib/analysis-photos";
 import {
   fileToCompressedDataUrl,
@@ -90,10 +91,10 @@ function ProjectPage() {
     else setMissing(true);
   }, [id]);
 
-  const update = useCallback((patch: Partial<Project>) => {
+  const update = useCallback((patch: Partial<Project> | ((prev: Project) => Partial<Project>)) => {
     setProject((prev) => {
       if (!prev) return prev;
-      const next = { ...prev, ...patch };
+      const next = { ...prev, ...(typeof patch === "function" ? patch(prev) : patch) };
       upsertProject(next);
       return next;
     });
@@ -175,25 +176,22 @@ function ProjectPage() {
     try {
       const units = loadPreferences().units;
       const supplierName = SUPPLIERS[supplier].label;
+      const notesSent = project.jobNotes ?? "";
       const result = await draftScope({
         data: {
           photos: project.photos.slice(0, 4),
           // Previous scope is deliberately NOT sent back, so regeneration replaces it instead of echoing it.
-          hint: [project.jobNotes, `Use ${units} measurements.`, `Price materials as rough per-unit retail at ${supplierName}.`].filter(Boolean).join("\n"),
+          hint: [notesSent, `Use ${units} measurements.`, `Price materials as rough per-unit retail at ${supplierName}.`].filter(Boolean).join("\n"),
         },
       });
-      // Keep existing materials (prices/edits untouched); only add AI items not already listed.
-      const have = new Set(project.materials.map((m) => m.name.trim().toLowerCase()));
-      const newMaterials = result.materials
-        .filter((m) => m.name.trim() && !have.has(m.name.trim().toLowerCase()))
-        .map((m) => ({ id: uid(), name: m.name, qty: m.qty || 1, price: m.price || 0 }));
-      update({
-        scope: result.description || project.scope,
-        tasks: result.tasks.length
-          ? result.tasks.map((text) => ({ id: uid(), text }))
-          : project.tasks,
-        materials: [...project.materials, ...newMaterials],
+      // Merge against the latest job state so edits made while waiting are kept.
+      let keptScope = false;
+      update((prev) => {
+        const { keptScope: kept, ...patch } = mergeDraft(prev, result, notesSent, uid);
+        keptScope = kept;
+        return patch;
       });
+      if (keptScope) toast.info("Your edited scope was kept");
       toast.success("Draft scope added — edit anything you like");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "AI draft failed");
@@ -204,7 +202,9 @@ function ProjectPage() {
 
   const setMaterial = (mid: string, patch: Partial<Material>) =>
     update({
-      materials: project.materials.map((m) => (m.id === mid ? { ...m, ...patch } : m)),
+      materials: project.materials.map((m) =>
+        m.id === mid ? { ...m, ...patch, ai: undefined } : m,
+      ),
     });
 
   return (
@@ -335,6 +335,11 @@ function ProjectPage() {
             )}
             {drafting ? "Reading the photos…" : "Draft scope from photos"}
           </Button>
+          {draftIsStale(project) && (
+            <p className="mt-2 text-xs font-medium text-accent-foreground">
+              Notes changed since the last draft — draft again to update the suggestions.
+            </p>
+          )}
           <p className="mt-2 text-xs text-muted-foreground">
             The AI draft is a rough first pass — check every line and price before sending.
           </p>
@@ -345,7 +350,7 @@ function ProjectPage() {
         <Section title="Scope of work">
           <Textarea
             value={project.scope}
-            onChange={(e) => update({ scope: e.target.value })}
+            onChange={(e) => update({ scope: e.target.value, scopeFromAi: false })}
             placeholder="Describe the work needed…"
             className="min-h-28 text-base"
           />
@@ -357,7 +362,7 @@ function ProjectPage() {
                   onChange={(e) =>
                     update({
                       tasks: project.tasks.map((x) =>
-                        x.id === task.id ? { ...x, text: e.target.value } : x,
+                        x.id === task.id ? { ...x, text: e.target.value, ai: undefined } : x,
                       ),
                     })
                   }
