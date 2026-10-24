@@ -10,6 +10,8 @@ export type DocType = "quote" | "invoice";
 export interface Task {
   id: string;
   text: string;
+  /** Untouched AI suggestion; removed once the contractor edits it. */
+  ai?: true;
 }
 
 export interface Material {
@@ -17,6 +19,8 @@ export interface Material {
   name: string;
   qty: number;
   price: number;
+  /** Untouched AI suggestion; removed once the contractor edits it. */
+  ai?: true;
 }
 
 export interface Project {
@@ -39,6 +43,10 @@ export interface Project {
   notes: string;
   /** Internal contractor job description / notes; never shown on the customer document. */
   jobNotes?: string;
+  /** Notes sent with the last successful AI draft. */
+  lastDraftNotes?: string;
+  /** True while the scope text is the AI's, unedited. */
+  scopeFromAi?: boolean;
   /** Supplier this job's material pricing is based on; set from the default when created. */
   supplier?: SupplierKey;
   paymentTerms?: string;
