@@ -1,6 +1,8 @@
 # Fix: redrafting the scope should replace old AI suggestions, not stack them
 
-## What the code does today (checked)
+## What the code does today (re-checked 24 Oct against the current code; nothing has changed since the plan was first written)
+
+- Where it lives: `runDraft`, `update`, `setMaterial`, the task edit/add/delete handlers and the description box in `src/routes/project.$id.tsx`, and `Task`/`Material`/`Project` in `src/lib/types.ts`. `draftScope` (`src/lib/scope.functions.ts`) only returns `{ description, tasks, materials }` and stays as it is.
 
 - **Nothing records where a line came from.** A material is just `{ id, name, qty, price }` and a task is just `{ id, text }`. Lines the AI added look the same as lines the contractor typed or edited. There is also no record of which notes the last draft used.
 - **All merging happens in one place:** `runDraft` on the job page.
@@ -38,7 +40,10 @@
 5. **Apply the draft to the job's latest state.** The merge uses the job as it is when the AI answers, not as it was at the click. Edits made while waiting are kept.
 6. **Failures stay safe.** The job is only changed after the AI succeeds, and the error message stays as it is now. Photos, labour, tax, supplier, client details and quote notes are never touched.
 
-**Older jobs:** existing lines have no tag, so they're treated as the contractor's and kept. Duplicates already in a job won't be removed automatically. The contractor deletes them once by hand.
+**Older jobs (saved before this fix):** nothing in them is tagged, so everything is treated as the contractor's and kept. This includes the description, tasks and materials.
+- An empty description is the one exception: it is filled with the AI's description.
+- **Limitation:** the first redraft on an older job adds the AI's new tasks and materials next to the existing ones instead of replacing them. Any duplicates already in the job also stay. The contractor deletes the old lines once by hand. After that, redrafts replace properly.
+- Duplicating a job copies the tags with it, so the copy follows the same rules.
 
 ## Ownership rule (approved)
 
@@ -86,3 +91,18 @@ Automated, in `src/lib/draft-merge.test.ts`:
 In the preview (no AI needed): a failed draft leaves the job unchanged, and the stale-notes hint appears after editing the notes.
 
 Needs a live photo/AI run, which you'll need to do: a real first draft, a redraft after changing the notes (check the new notes show up in the description or tasks), and two redrafts with the same notes (the materials count stays steady).
+
+Manual checklist in the preview:
+1. Draft, then change one material's price and one task's text. Redraft and check both are exactly the same.
+2. Add a material and a task by hand. Redraft and check both are still there.
+3. Edit the description. Redraft and check it is unchanged and the "kept" message shows.
+4. Delete an AI material, then redraft. It only returns if the AI suggests it again.
+5. Change the notes and check the hint appears and nothing is removed. Redraft, and the hint disappears.
+6. Turn off the network and redraft. You should see an error and the job unchanged. Turn it back on and redraft, and it works.
+7. While a draft is running, edit a material's price. Check the edit is still there after the draft finishes.
+8. Check that labour, tax, supplier, client details, quote notes, terms, deposit, validity, quote/invoice type and photos are all unchanged.
+
+## Risks and assumptions
+- AI wording varies between runs. Only untouched AI lines are replaced, so a contractor-owned line and a fresh AI line can still describe the same item in different words. Fresh AI lines that match a kept line's name exactly are skipped, but there is no fuzzy matching, so the AI's legitimate products are never dropped.
+- Only the first 4 photos are sent to the AI, which is how it works today. Changing that is outside this fix.
+- No deviations from the approved requirements, no new dependencies, and no screens are redesigned.
