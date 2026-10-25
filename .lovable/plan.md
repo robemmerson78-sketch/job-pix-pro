@@ -53,21 +53,25 @@ An automotive job reuses the same job page and adds or changes these parts:
 
 **Tests (Bun, next to `draft-merge.test.ts`)**
 - A job with no `kind` totals the same as before. Shop supplies are added before tax.
-- Unconfirmed proposed parts are excluded from the document totals. Confirming or editing a part includes it.
+- Confirming or editing a proposed part makes it confirmed and contractor-owned. The document rule for unconfirmed lines is tested once you decide it.
 - A redraft keeps confirmed and edited findings and parts exactly, and replaces only untouched AI lines.
 - The automotive supplier choice never changes the contractor default.
+- Markup and labour totals are tested against whichever model you choose.
 
 **Preview checks**
 - An existing contractor job is unchanged, including its document.
-- A new automotive job: vehicle details and the Repair reference URL persist after reload, the link opens, and AI findings show their labels.
+- A new automotive job: vehicle details persist after reload. The Repair reference URL is optional: the job works with it empty, and when it is filled in the link opens. AI findings show their labels.
 - The confirm flow works, the document shows the vehicle block, and the custom supplier is saved.
 
-## 5. Decisions needed from you
+## 5. Decisions needed from you (awaiting your input — nothing assumed)
 
-1. **Original scope conflict:** JobPix was originally specified as "no automotive / small engine repair". Should automotive cover cars and light trucks only, or include small engines too?
-2. **Markup:** today tax and markup share one percentage. Should automotive jobs get a separate parts markup %, or keep the combined field? Stage 1 assumes the combined field stays.
-3. **Unconfirmed lines on the document:** should they be left off the document (assumed), or should the document be blocked until every line is confirmed?
-4. **Labour:** is one hours × rate line per job enough (assumed), or do you need labour hours for each repair?
+Scope is settled: Stage 1 covers cars and light trucks, and small engines/equipment come in a later stage.
+
+1. **Parts markup:** today tax and markup share one percentage. Should automotive jobs keep that combined field, or get a separate parts markup % (applied to parts before tax)?
+2. **Unconfirmed AI suggestions:** should unconfirmed lines be left off the document with a warning, or should the document be blocked until every line is confirmed or removed?
+3. **Labour breakdown:** one hours × rate line per job, or labour hours for each repair line (with one shared rate, or a rate per line)?
+
+Implementation starts only after these three are answered.
 
 ## Technical details
 
