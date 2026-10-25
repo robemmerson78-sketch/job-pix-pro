@@ -10,22 +10,31 @@
 
 ## 2. Smallest viable first release (Stage 1)
 
-A job gets a **kind**: Contractor (the default) or Automotive. You pick it in the New job dialog. Nothing changes for contractor jobs.
+A job gets a **kind**: Contractor (the default) or Automotive. You pick it in the New job dialog. Nothing changes for contractor jobs or their saved data.
+
+**Stage 1 covers cars and light trucks only.** The AI prompt, labels and vehicle fields are written for road vehicles.
 
 An automotive job reuses the same job page and adds or changes these parts:
-1. **Vehicle card**: year, make, model, engine/trim, an optional VIN/plate/unit number, an optional odometer reading, and an optional **Repair reference URL**. The link is saved with the job and opens in a new tab. JobPix never copies or stores the manual itself.
-2. **Customer concern / technician notes**: the existing contractor notes field with an automotive label.
-3. **AI findings (assistance only)**: one "Draft findings from photos" action. It gives a short list of findings, each marked Observed / Likely / Unknown with low/med/high confidence, and each tagged "Needs confirmation". It also suggests repairs and parts lines.
-4. **Confirmation step**: each finding has Confirm / Edit / Remove. Suggested parts and repairs come in as **Proposed** (an "AI – not confirmed" badge) and only count as confirmed once you tap Confirm or edit them. The quote document can only be opened from the job once no proposed line is left unconfirmed. Unconfirmed lines are left off the document, with a clear warning shown.
-5. **Estimate**: parts (name, part # optional, qty, price), labour hours × rate (same fields as today), **Shop supplies / other** (one editable amount), the existing Tax %, and totals. Every price is editable, and the AI never sets a final price; suggested prices start at 0.
-6. **Parts supplier**: PartSource, Canadian Tire, or a custom name you type. For PartSource and Canadian Tire, "Check price" opens that store's search page. A custom supplier has no link. It is labelled "Based on {supplier} pricing — not live stock or pricing."
-7. **Document**: for automotive jobs, a vehicle block (year/make/model/engine, VIN) and a Parts table appear. The Repair reference URL and AI confidence are **not** printed. Contractor documents stay exactly as they are.
+1. **Vehicle card**: year, make, model, engine/trim, an optional VIN/plate/unit number, and an optional odometer reading.
+2. **Optional Repair reference URL**: a plain link field you can paste any manual or procedure link into. It is saved with the job and opens in a new tab. The link is generic: it does not depend on any particular manual site, partnership or integration. JobPix never copies, scrapes or stores the manual itself, and everything works with the field left empty.
+3. **Customer concern / technician notes**: the existing contractor notes field with an automotive label.
+4. **AI findings (assistance only)**: one "Draft findings from photos" action. It gives a short list of findings, each marked Observed / Likely / Unknown with low/med/high confidence, and each tagged "Needs confirmation". It also suggests repairs and parts lines.
+5. **Confirmation before quoting**: each finding has Confirm / Edit / Remove. Suggested parts and repairs come in as **Proposed** (an "AI – not confirmed" badge) and only count as confirmed once you tap Confirm or edit them. How unconfirmed lines are treated on the quote document is **awaiting your decision** (see section 5).
+6. **Estimate**: parts (name, part # optional, qty, price), labour, **Shop supplies / other** (one editable amount), Tax %, and totals. Every price is editable, the AI never sets a final price, and suggested prices start at 0. The markup model and how labour is broken down are **awaiting your decision** (see section 5).
+7. **Parts supplier (separate from contractor suppliers)**: PartSource, Canadian Tire, or a custom name you type. For PartSource and Canadian Tire, "Check price" opens that store's search page. A custom supplier has no link. It is labelled "Based on {supplier} pricing — not live stock or pricing."
+8. **Document**: for automotive jobs, a vehicle block (year/make/model/engine, VIN) and a Parts table appear. The Repair reference URL and AI confidence are not printed. Contractor documents stay exactly as they are.
 
-**Deliberately not in Stage 1:** guided task walkthroughs (Stage 3, optional, off by default), any LEMON branding or integration, catalog/stock APIs, VIN decoding, scraping or hosting manuals, and automatic pricing or sending.
+**Deliberately not in Stage 1:**
+- Small-engine and equipment work (mowers, ATVs, generators and similar)
+- Guided task walkthroughs
+- Any manual-site branding, partnership or integration
+- Catalog/stock APIs, VIN decoding, or scraping/hosting manuals
+- Automatic pricing or sending
 
 **Later stages:**
 - Stage 2: a default automotive supplier and labour rate in Settings, and a reusable list of vehicles.
 - Stage 3: an optional walkthrough setting, off by default.
+- Stage 4: small-engine/equipment support, once the car and light-truck workflow has been tested and validated.
 
 ## 3. Backward compatibility and storage
 
