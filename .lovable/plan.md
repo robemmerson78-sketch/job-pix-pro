@@ -1,90 +1,80 @@
-# Automotive estimating for JobPix (staged)
+# AI Clarification Questions + safer material redrafts
 
-## 1. What exists today (checked in the code)
+(This replaces the unapproved automotive plan as the current plan. The automotive decisions are still in this chat and can be restored into a plan later.)
 
-- **Job record** (`src/lib/types.ts` `Project`): name, client, address, quote/invoice type, photos plus photoIds, scope, tasks, materials (name/qty/price, with an `ai` flag meaning "untouched AI suggestion"), labour hours/rate, `taxPercent`, notes, jobNotes, lastDraftNotes, scopeFromAi, supplier, payment terms, validity and deposit. Saved on the device under `cq.projects.v1`.
-- **Totals** (`totals()`): materials + labour, then one combined "Tax / markup %". There is **no separate markup** and **no shop supplies/other costs line** today.
-- **Suppliers** (`src/lib/settings.ts`): a fixed list of Home Hardware Building Centre / RONA / Home Depot. The default supplier lives in preferences. Jobs keep their supplier, and older jobs use the current default.
-- **AI** (`src/lib/scope.functions.ts` `draftScope`): one gateway call that sends up to 6 photos plus a hint. The prompt explicitly says **"never automotive or small-engine repair"**. `mergeDraft` (`src/lib/draft-merge.ts`, tested) replaces untouched AI lines and keeps contractor-owned lines exactly as they are.
-- **Screens**: `src/routes/index.tsx` (job list, New job dialog), `src/routes/project.$id.tsx` (job editor), `src/routes/document.$id.tsx` (printable quote/invoice), `src/routes/settings.tsx`.
+## What the code does today (checked)
 
-## 2. Smallest viable first release (Stage 1)
+- On the job page (`src/routes/project.$id.tsx`), "Draft scope from photos" (`runDraft`) sends the first 4 photos plus the contractor notes, the units and the supplier name to `draftScope` (`src/lib/scope.functions.ts`). The current scope and the current materials are **not** sent.
+- `mergeDraft` (`src/lib/draft-merge.ts`) removes every untouched AI material (`ai: true`) and adds the fresh ones. A fresh item is skipped only if its name **exactly** matches a kept line.
+- Editing a material's name, qty or price clears its `ai` tag (`setMaterial`), which makes the line contractor-owned.
+- AI lines count in totals and print on the quote as soon as they arrive. There is no "unconfirmed" state and no "excluded / already owned" state.
 
-A job gets a **kind**: Contractor (the default) or Automotive. You pick it in the New job dialog. Nothing changes for contractor jobs or their saved data.
+**Why the paint/primer regression happened:**
+- **Duplicate paint:** the edited paint line became contractor-owned and was kept. The AI did not know that line existed and returned a differently worded "Exterior paint …", which passed the exact-name check and was added.
+- **Primer $25 → $55:** primer was still an untouched AI line, so the redraft replaced it with a fresh AI guess at a different price.
 
-**Stage 1 covers cars and light trucks only.** The AI prompt, labels and vehicle fields are written for road vehicles.
+## What you will see
 
-An automotive job reuses the same job page and adds or changes these parts:
-1. **Vehicle card**: year, make, model, engine/trim, an optional VIN/plate/unit number, and an optional odometer reading.
-2. **Optional Repair reference URL**: a plain link field you can paste any manual or procedure link into. It is saved with the job and opens in a new tab. The link is generic: it does not depend on any particular manual site, partnership or integration. JobPix never copies, scrapes or stores the manual itself, and everything works with the field left empty.
-3. **Customer concern / technician notes**: the existing contractor notes field with an automotive label.
-4. **AI findings (assistance only)**: one "Draft findings from photos" action. It gives a short list of findings, each marked Observed / Likely / Unknown with low/med/high confidence, and each tagged "Needs confirmation". It also suggests repairs and parts lines.
-5. **Confirmation before quoting**: each finding has Confirm / Edit / Remove. Suggested parts and repairs come in as **Proposed** (an "AI – not confirmed" badge) and only count as confirmed once you tap Confirm or edit them. **Unconfirmed suggestions are left out of the quote document and out of all totals.** While any are left, the job page and the document both show a clear warning, e.g. "2 AI suggestions not confirmed — not included in this estimate."
-6. **Estimate**: parts (name, part # optional, qty, price), **one total labour-hours figure × one hourly rate per job**, **Shop supplies / other** (one editable amount), a separate **Parts markup %**, a separate **Tax %**, and totals. Every price is editable, the AI never sets a final price, and suggested prices start at 0.
-   - Totals order: confirmed parts → plus parts markup % (applied to parts only) → plus labour → plus shop supplies → subtotal → plus tax % → total.
-   - Contractor jobs keep their existing single "Tax / markup %" field and their totals exactly as they are today.
-7. **Parts supplier (separate from contractor suppliers)**: PartSource, Canadian Tire, or a custom name you type. For PartSource and Canadian Tire, "Check price" opens that store's search page. A custom supplier has no link. It is labelled "Based on {supplier} pricing — not live stock or pricing."
-8. **Document**: for automotive jobs, a vehicle block (year/make/model/engine, VIN) and a Parts table appear. The Repair reference URL and AI confidence are not printed. Contractor documents stay exactly as they are.
+**1. A separate "AI Clarification Questions" box directly below "Contractor job description / notes".**
+- The box has a "Check for questions" button. The AI looks at the photos, notes, current scope and current materials (with your prices and exclusions), then asks **0–5** short questions, only where the answer would change the work, the materials, the quantities or the price. A straightforward job shows "No questions — ready to draft."
+- Each question is labelled "AI question — not a job fact". Under each one: a short answer box, plus **Not sure** and **Skip**. A question's wording can be edited, and it can be deleted.
+- Your answers are sent with every "Draft scope from photos". If the notes are empty, drafting still works with no questions asked. The questions step is optional and never blocks drafting.
+- When you check again, questions that are already answered or skipped are not asked again. They are re-asked only if the notes, photos or affected materials have changed since they were answered. "Not sure" questions can come back.
+- Questions and answers are kept in a separate list. They never touch the notes box.
 
-**Deliberately not in Stage 1:**
-- Small-engine and equipment work (mowers, ATVs, generators and similar)
-- Guided task walkthroughs
-- Any manual-site branding, partnership or integration
-- Catalog/stock APIs, VIN decoding, or scraping/hosting manuals
-- Automatic pricing or sending
+**2. Material lines get three clear states.**
+- **Suggested (AI, not confirmed):** a badge plus **Confirm**. Editing the line also confirms it. Suggested lines are **left out of totals and the quote document** until confirmed, with a warning: "3 AI suggestions not confirmed — not in this quote."
+- **Yours (confirmed or edited):** the name, qty and price are never changed by a redraft.
+- **Excluded / customer not charged:** a new toggle, e.g. "Already owned — don't charge". The line stays visible on the job, its cost is $0 in totals, and it is not printed. A redraft won't re-add it.
 
-**Later stages:**
-- Stage 2: a default automotive supplier and labour rate in Settings, and a reusable list of vehicles.
-- Stage 3: an optional walkthrough setting, off by default.
-- Stage 4: small-engine/equipment support, once the car and light-truck workflow has been tested and validated.
+**3. Safer redrafts.**
+- Your lines are kept exactly, including the name, qty, price and excluded state.
+- The AI is now told your current materials and prices, and is asked to return, for each item, whether it **matches one of your existing lines** (by line id) or is new.
+  - A match to one of your lines adds nothing and never changes your price.
+  - A match to an untouched suggested line updates that suggestion in place. If its price differs from the old suggestion, the line shows "AI price changed $25 → $55", and keeping or using either price is a tap. The price is never silently overwritten.
+- **Unsure matches go to review instead of duplicating.** If a fresh item looks like one of your lines (similar words, e.g. both mention "exterior paint") but the AI didn't claim a match, it lands in a small "Possible duplicates — review" list. From there you can **Add as new** or **Dismiss**. Nothing is auto-added.
+- Failure safety stays as today: a failed draft changes nothing, and the merge is applied to the latest job state.
 
-## 3. Backward compatibility and storage
+## Paint / primer example under the new rules
+1. Draft: suggested Exterior paint $60 and Primer $25.
+2. You edit the paint to $0, or mark it "Already owned — don't charge". It becomes yours. You confirm the primer at $25, so it is yours too.
+3. Optionally, a clarification question: "Is the existing paint enough for the full area?" → "Yes".
+4. Redraft: the AI sees your paint and primer lines. Its paint returns as a match, so nothing is added. Primer is a match, so it stays $25. Any loosely similar paint item goes to "Possible duplicates — review" and does not join the quote.
 
-- Every new field is optional. If a job has no `kind`, it is treated as `"contractor"`, so every existing job loads and behaves the same. No data migration step is run, nothing is rewritten on load, and the same storage keys are used.
-- Automotive data lives in one optional `vehicle` object plus an optional `autoSupplier`, `shopSupplies` and `findings` on the job. The contractor `supplier` field and preference are never read or changed for automotive jobs.
-- Duplicate copies the vehicle data. Quote→invoice conversion works the same way.
-- Ownership rules are unchanged. Findings and parts reuse the `ai` flag, so any edit makes the line contractor-owned, and a redraft replaces only untouched AI lines. A failed draft leaves everything as it was.
+## Older jobs
+- Lines saved before this change have no new tags. Untagged lines are treated as yours and confirmed, as today, so existing quote totals do not change.
+- Existing `ai: true` lines become "Suggested". **Decision for you below:** these currently count in totals, and applying the new rule would drop them from older quotes until you confirm them.
 
-## 4. Risks and test plan
+## Acceptance tests
+Automated (Bun, beside `draft-merge.test.ts`):
+1. **Paint/primer:** edited paint at $0 plus confirmed primer at $25, then a redraft whose AI returns "Exterior paint" (different wording) and "Primer $55" → still one paint line at $0 and primer at $25. Any loose paint match goes to review, not to the quote.
+2. An untouched suggestion whose fresh AI price differs is updated in place with a "price changed" flag, and the line count stays the same.
+3. An excluded line stays excluded, costs $0, and is not re-added.
+4. Unconfirmed suggestions are excluded from totals. Confirming or editing includes them.
+5. Repeating redrafts with the same inputs does not grow the list.
+6. Answered or skipped questions are not re-asked unless their inputs have changed.
+7. Notes, photos, labour, tax, supplier, client details and document fields are identical after a merge.
+8. A failed draft or question check leaves the job unchanged.
 
-**Risks**
-- The current AI prompt forbids automotive work, so automotive needs its own separate prompt and function. The contractor prompt stays untouched.
-- AI diagnosis from photos is unreliable. This is handled by the Observed/Likely/Unknown labels, confidence levels, required confirmation, and an on-screen disclaimer.
-- Photos plus the extra vehicle data increase the localStorage size. The existing 8-photo limit and compression are kept.
-- The job page file is already large. Automotive parts will go in their own components to keep the risk low.
+Preview checklist:
+- The box sits below the notes, and its answer, Not sure, Skip and edit controls work.
+- Answers persist after reload.
+- The warning count is correct, and the document omits suggested and excluded lines.
+- The review list behaves correctly.
+- Live AI run (you): the full paint/primer scenario on a real job.
 
-**Tests (Bun, next to `draft-merge.test.ts`)**
-- A job with no `kind` totals exactly the same as before.
-- Automotive totals: with parts $100, markup 20%, labour 2 h × $120, shop supplies $15 and tax 13%, the result is subtotal $375 and total $423.75.
-- Markup applies to parts only, never to labour or shop supplies.
-- Unconfirmed AI parts are excluded from the totals and from the document lines. Confirming or editing a part includes it.
-- A redraft keeps confirmed and edited findings and parts exactly, and replaces only untouched AI lines.
-- The automotive supplier choice never changes the contractor default.
-
-**Preview checks**
-- An existing contractor job is unchanged, including its document.
-- A new automotive job: vehicle details persist after reload. The Repair reference URL is optional: the job works with it empty, and when it is filled in the link opens. AI findings show their labels.
-- The confirm flow works. The unconfirmed warning appears on the job page and the document. The document shows the vehicle block, the markup and the tax lines. The custom supplier is saved.
-
-## 5. Decisions (settled)
-
-- Scope: cars and light trucks only. Small engines and equipment come in a later stage.
-- Markup: a separate parts markup % and a separate tax % for automotive jobs.
-- Unconfirmed AI suggestions: left out of documents and totals, with a clear warning.
-- Labour: one total labour-hours figure and one hourly rate per job.
-
-No open decisions remain. Implementation starts only once you approve this plan.
+## Decisions needed from you
+1. **Older jobs with existing AI lines:** keep counting them in totals until edited (safest for old quotes), or treat them as unconfirmed like new suggestions?
+2. **When to ask questions:** only when you tap "Check for questions" (assumed, so there is no extra AI call per draft), or automatically before each draft?
 
 ## Technical details
-
-- `types.ts`:
-  - New optional fields: `kind?: "contractor" | "automotive"`, `vehicle?: { year, make, model, engine, vin?, odometer?, referenceUrl? }`, `autoSupplier?: { key: "partsource" | "canadiantire" | "custom"; customName? }`, `shopSupplies?: number`, `partsMarkupPercent?: number`, `findings?: Finding[]`.
-  - `Material` gets an optional `partNumber`. Proposed AI lines reuse `ai: true`; Confirm clears it.
-  - `totals()` is unchanged for contractor jobs. A new `autoTotals()` counts only non-`ai` parts and applies markup to parts only.
-  - Labour reuses the existing `laborHours` and `laborRate` fields.
-- `settings.ts`: a separate `AUTO_SUPPLIERS` map. `SUPPLIERS` and the contractor default are left untouched.
-- New `src/lib/auto.functions.ts` `draftAutoFindings`, a server function with its own cars/light-trucks prompt that includes the vehicle details and notes. It returns findings and proposed parts/repairs with status and confidence, and runs on the existing gateway path and model. The contractor `draftScope` is unchanged.
-- New `src/lib/auto-merge.ts` plus tests, which reuse the `mergeDraft` ownership rules. New `autoTotals` tests go alongside them.
-- New components `VehicleCard` and `FindingsList`. `project.$id.tsx` branches on `kind`, `document.$id.tsx` adds a vehicle block, markup line and warning, and `index.tsx` gets a kind picker in the New job dialog.
-- The repair reference URL is checked to be http(s) and rendered with `rel="noopener noreferrer"`.
-- Record in AGENTS.md: "Job kind gates automotive UI and totals; missing kind = contractor."
+- `types.ts` (all fields optional):
+  - `Material`: `excluded?`, `aiPrevPrice?`, `confirmed?`
+  - `Project`: `clarifications?: { id, question, answer?, status: "open" | "answered" | "unsure" | "skipped", askedFor: string /* input fingerprint */ }[]`, `pendingDuplicates?: Material[]`
+  - `ai: true` keeps meaning "untouched suggestion".
+- New server function `askClarifications` in `src/lib/clarify.functions.ts`, on the same gateway path and model as `draftScope`. Its input is photos, notes, scope, materials (id/name/qty/price/excluded/owned) and the prior Q&A. Its output is strict JSON `{questions: string[]}` capped at 5.
+- `draftScope`'s input gets optional `currentMaterials` and `answers`, and its output gets an optional `matchId` per material. The prompt adds the matching instruction. Old callers still work.
+- `mergeDraft` gets the match-by-id rules, the in-place price-change flag, the excluded/owned protection, and a token-overlap check that routes unsure items to `pendingDuplicates`. It stays a pure function.
+- `totals()` skips `ai` and `excluded` lines; for older jobs this depends on decision 1. `document.$id.tsx` filters the same lines and shows the warning.
+- New `ClarificationsBox` component, placed under the notes field in `project.$id.tsx`.
+- No new dependencies, and storage stays on this device.
