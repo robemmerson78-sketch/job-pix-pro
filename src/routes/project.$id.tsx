@@ -477,7 +477,7 @@ function ProjectPage() {
                     <Button size="sm" variant="outline" onClick={() => setMaterial(m.id, { price: m.price })}>
                       Keep {fmt(m.price || 0)}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setMaterial(m.id, { price: m.aiSuggestedPrice })}>
+                    <Button size="sm" variant="outline" onClick={() => setMaterial(m.id, { price: m.aiSuggestedPrice ?? m.price })}>
                       Use {fmt(m.aiSuggestedPrice)}
                     </Button>
                   </div>

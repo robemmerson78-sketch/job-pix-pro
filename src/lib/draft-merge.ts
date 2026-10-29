@@ -4,7 +4,7 @@ export interface DraftResult {
   description: string;
   tasks: string[];
   /** matchId: id of an existing job line the AI says this item is the same as. */
-  materials: Array<{ name: string; qty: number; price: number; matchId?: string }>;
+  materials: Array<{ name: string; qty: number; price: number; matchId?: string | undefined }>;
 }
 
 const key = (s: string) => s.trim().toLowerCase();

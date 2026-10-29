@@ -54,7 +54,7 @@ function DocumentPage() {
   const ref = project.id.slice(0, 8).toUpperCase();
 
   const share = async () => {
-    const lines = [
+    const text = [
       `${heading} — ${project.name}`,
       c.business || c.name,
       "",
@@ -67,9 +67,9 @@ function DocumentPage() {
       `Total: ${fmt(t.total)}`,
     ].join("\n");
     try {
-      if (navigator.share) await navigator.share({ title: `${heading} — ${project.name}`, text: lines });
+      if (navigator.share) await navigator.share({ title: `${heading} — ${project.name}`, text });
       else {
-        await navigator.clipboard.writeText(lines);
+        await navigator.clipboard.writeText(text);
         toast.success("Copied to clipboard");
       }
     } catch {
