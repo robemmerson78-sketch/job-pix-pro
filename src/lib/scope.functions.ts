@@ -119,6 +119,7 @@ export const draftScope = createServerFn({ method: "POST" })
             name: z.string(),
             qty: z.coerce.number().default(1),
             price: z.coerce.number().default(0),
+            matchId: z.string().optional().catch(undefined),
           }),
         )
         .default([]),
