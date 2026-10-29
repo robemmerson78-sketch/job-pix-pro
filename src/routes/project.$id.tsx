@@ -11,10 +11,12 @@ import {
   Sparkles,
   Trash2,
   X,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppHeader } from "@/components/AppHeader";
+import { ClarificationsBox, draftAnswers } from "@/components/ClarificationsBox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -522,19 +524,83 @@ function ProjectPage() {
                     )}
                   </Button>
                 </div>
-                <p className="mt-2 text-right text-base font-bold text-primary">
-                  {fmt((m.qty || 0) * (m.price || 0))}
-                </p>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-primary"
+                      checked={!!m.excluded}
+                      onChange={(e) => setMaterial(m.id, { excluded: e.target.checked || undefined })}
+                    />
+                    Already owned — don't charge
+                  </label>
+                  <p className="text-right text-base font-bold text-primary">
+                    {m.excluded ? (
+                      <span className="text-sm font-medium text-muted-foreground">Not charged</span>
+                    ) : m.pending ? (
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {fmt((m.qty || 0) * (m.price || 0))} · not in quote
+                      </span>
+                    ) : (
+                      fmt((m.qty || 0) * (m.price || 0))
+                    )}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
+          {project.pendingDuplicates?.length ? (
+            <div className="mt-4 rounded-lg border border-attention/50 bg-attention/10 p-3">
+              <p className="text-sm font-semibold text-primary">Possible duplicates — review</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                The AI suggested these, but they look like lines you already have. They are not in the quote.
+              </p>
+              <ul className="mt-2 space-y-2">
+                {project.pendingDuplicates.map((d) => (
+                  <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-card p-2 text-sm">
+                    <span>
+                      {d.name} ×{d.qty} · {fmt(d.price || 0)}
+                    </span>
+                    <span className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          update((prev) => ({
+                            materials: [
+                              ...prev.materials,
+                              { id: d.id, name: d.name, qty: d.qty, price: d.price },
+                            ],
+                            pendingDuplicates: (prev.pendingDuplicates ?? []).filter((x) => x.id !== d.id),
+                          }))
+                        }
+                      >
+                        Add as new
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          update((prev) => ({
+                            pendingDuplicates: (prev.pendingDuplicates ?? []).filter((x) => x.id !== d.id),
+                          }))
+                        }
+                      >
+                        Dismiss
+                      </Button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <Button
             variant="secondary"
             className="mt-3 h-12 w-full"
             onClick={() =>
-              update({
-                materials: [...project.materials, { id: uid(), name: "", qty: 1, price: 0 }],
-              })
+              update((prev) => ({
+                materials: [...prev.materials, { id: uid(), name: "", qty: 1, price: 0 }],
+              }))
             }
           >
             <Plus className="size-5" /> Add material
