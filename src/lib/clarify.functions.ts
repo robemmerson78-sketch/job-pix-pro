@@ -53,29 +53,71 @@ export const askClarifications = createServerFn({ method: "POST" })
       `Already answered / skipped (JSON):\n${JSON.stringify(data.resolved ?? [])}`,
     ];
     const content: Array<Record<string, unknown>> = [
-      { type: "text", text: parts.join("\n\n") },
-      ...data.photos.map((url) => ({ type: "image_url", image_url: { url } })),
+      { type: "input_text", text: parts.join("\n\n") },
+      ...data.photos.map((url) => ({ type: "input_image", image_url: url })),
     ];
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+      headers: {
+        "Content-Type": "application/json",
+        "Lovable-API-Key": key,
+        "X-Lovable-AIG-SDK": "fetch",
+      },
       body: JSON.stringify({
-        model: "google/gemini-3.6-flash",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM },
-          { role: "user", content },
-        ],
+        model: "openai/gpt-6-astra",
+        instructions: SYSTEM,
+        input: [{ role: "user", content }],
+        reasoning: { effort: "low" },
+        store: false,
+        stream: true,
+        text: {
+          format: {
+            type: "json_schema",
+            name: "clarifications",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: { questions: { type: "array", items: { type: "string" } } },
+              required: ["questions"],
+              additionalProperties: false,
+            },
+          },
+        },
       }),
     });
 
     if (res.status === 429) throw new Error("AI is rate limited right now. Try again shortly.");
     if (res.status === 402) throw new Error("AI credits exhausted. Add credits to continue.");
-    if (!res.ok) throw new Error(`AI request failed (${res.status})`);
+    if (res.status === 403) throw new Error("AI access is blocked for this workspace right now.");
+    if (!res.ok || !res.body) throw new Error(`AI request failed (${res.status})`);
 
-    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const text = json.choices?.[0]?.message?.content ?? "";
+    // Read the streamed answer; only the final text is used.
+    let text = "";
+    let buf = "";
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+        let ev: { type?: string; delta?: string };
+        try {
+          ev = JSON.parse(payload);
+        } catch {
+          continue;
+        }
+        if (ev.type === "response.output_text.delta" && ev.delta) text += ev.delta;
+        if (ev.type === "response.failed" || ev.type === "error")
+          throw new Error("AI couldn't check for questions. Try again.");
+      }
+    }
     const cleaned = text.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
     let parsed: unknown;
     try {
