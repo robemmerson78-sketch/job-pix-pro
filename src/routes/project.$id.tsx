@@ -182,6 +182,19 @@ function ProjectPage() {
           photos: project.photos.slice(0, 4),
           // Previous scope is deliberately NOT sent back, so regeneration replaces it instead of echoing it.
           hint: [notesSent, `Use ${units} measurements.`, `Price materials as rough per-unit retail at ${supplierName}.`].filter(Boolean).join("\n"),
+          // Current lines let the AI say which items it is re-suggesting, instead of adding duplicates.
+          currentMaterials: project.materials
+            .filter((m) => m.name.trim())
+            .slice(0, 60)
+            .map((m) => ({
+              id: m.id,
+              name: m.name,
+              qty: Number(m.qty) || 0,
+              price: Number(m.price) || 0,
+              owner: m.ai ? ("ai" as const) : ("contractor" as const),
+              excluded: !!m.excluded,
+            })),
+          answers: draftAnswers(project).slice(0, 20),
         },
       });
       // Merge against the latest job state so edits made while waiting are kept.
@@ -200,12 +213,23 @@ function ProjectPage() {
     }
   };
 
+  // Any edit or confirm makes the line the contractor's: it counts in totals and redrafts never change it.
   const setMaterial = (mid: string, patch: Partial<Material>) =>
-    update({
-      materials: project.materials.map((m) =>
-        m.id === mid ? { ...m, ...patch, ai: undefined } : m,
+    update((prev) => ({
+      materials: prev.materials.map((m) =>
+        m.id === mid
+          ? {
+              ...m,
+              ...patch,
+              ai: undefined,
+              pending: undefined,
+              aiSuggestedPrice: "price" in patch ? undefined : m.aiSuggestedPrice,
+            }
+          : m,
       ),
-    });
+    }));
+  const pendingCount = project.materials.filter((m) => m.pending).length;
+  const legacyAiCount = project.materials.filter((m) => m.ai && !m.pending).length;
 
   return (
     <div className="min-h-screen">
@@ -327,6 +351,8 @@ function ProjectPage() {
               For you only — used as context for the AI, never shown to the client.
             </p>
           </div>
+          <ClarificationsBox project={project} update={update} />
+
           <Button variant="action" className="mt-2 h-14 w-full text-base" onClick={runDraft} disabled={drafting}>
             {drafting ? (
               <Loader2 className="size-5 animate-spin" />
@@ -396,9 +422,32 @@ function ProjectPage() {
           <p className="-mt-1 mb-3 text-xs text-muted-foreground">
             Based on {SUPPLIERS[supplier].label} pricing. "Check price" opens the item on their site.
           </p>
+          {pendingCount ? (
+            <p role="status" className="mb-3 rounded-md border border-attention/50 bg-attention/10 p-2.5 text-sm font-medium text-attention-foreground">
+              {pendingCount} AI {pendingCount === 1 ? "suggestion" : "suggestions"} not confirmed — not in this quote.
+            </p>
+          ) : null}
+          {legacyAiCount ? (
+            <p className="mb-3 text-xs text-muted-foreground">
+              {legacyAiCount} earlier AI {legacyAiCount === 1 ? "line is" : "lines are"} still in this quote — review and confirm when you can.
+            </p>
+          ) : null}
           <div className="space-y-3">
             {project.materials.map((m) => (
-              <div key={m.id} className="rounded-lg border border-border p-3">
+              <div
+                key={m.id}
+                className={`rounded-lg border p-3 ${m.pending ? "border-dashed border-ai/60 bg-secondary/30" : "border-border"} ${m.excluded ? "opacity-70" : ""}`}
+              >
+                {m.ai ? (
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-secondary-foreground">
+                      {m.pending ? "AI suggestion — not confirmed" : "AI suggestion — review"}
+                    </span>
+                    <Button size="sm" variant="secondary" onClick={() => setMaterial(m.id, {})}>
+                      <Check className="size-4" /> Confirm
+                    </Button>
+                  </div>
+                ) : null}
                 <div className="flex items-start gap-2">
                   <Input
                     value={m.name}
@@ -412,12 +461,25 @@ function ProjectPage() {
                     className="size-11 shrink-0 text-muted-foreground"
                     aria-label="Delete material"
                     onClick={() =>
-                      update({ materials: project.materials.filter((x) => x.id !== m.id) })
+                      update((prev) => ({ materials: prev.materials.filter((x) => x.id !== m.id) }))
                     }
                   >
                     <Trash2 className="size-5" />
                   </Button>
                 </div>
+                {m.aiSuggestedPrice !== undefined ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-attention/10 p-2 text-sm">
+                    <span className="text-attention-foreground">
+                      AI price changed {fmt(m.price || 0)} → {fmt(m.aiSuggestedPrice)}
+                    </span>
+                    <Button size="sm" variant="outline" onClick={() => setMaterial(m.id, { price: m.price })}>
+                      Keep {fmt(m.price || 0)}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setMaterial(m.id, { price: m.aiSuggestedPrice })}>
+                      Use {fmt(m.aiSuggestedPrice)}
+                    </Button>
+                  </div>
+                ) : null}
                 <div className="mt-2 grid grid-cols-[5rem_1fr_auto] items-end gap-2">
                   <div className="space-y-1">
                     <Label className="label-caps">Qty</Label>
