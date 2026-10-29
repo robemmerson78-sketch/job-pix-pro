@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getProject, loadContractor } from "@/lib/storage";
 import { useCurrency } from "@/lib/settings";
-import { money, totals, type Contractor, type Project } from "@/lib/types";
+import { isBillable, money, totals, type Contractor, type Project } from "@/lib/types";
 import { defaultContractor } from "@/lib/storage";
 
 export const Route = createFileRoute("/document/$id")({
@@ -47,26 +47,29 @@ function DocumentPage() {
 
 
   const t = totals(project);
+  // New unconfirmed AI suggestions and "already owned" lines never reach the customer.
+  const lines = project.materials.filter(isBillable);
+  const unconfirmed = project.materials.filter((m) => m.pending).length;
   const heading = project.type === "invoice" ? "Invoice" : "Quote";
   const ref = project.id.slice(0, 8).toUpperCase();
 
   const share = async () => {
-    const lines = [
+    const text = [
       `${heading} — ${project.name}`,
       c.business || c.name,
       "",
       project.scope,
       "",
-      ...project.materials.map(
+      ...lines.map(
         (m) => `• ${m.name} ×${m.qty} — ${fmt((m.qty || 0) * (m.price || 0))}`,
       ),
       `Labor: ${project.laborHours} hrs @ ${fmt(project.laborRate)} = ${fmt(t.labor)}`,
       `Total: ${fmt(t.total)}`,
     ].join("\n");
     try {
-      if (navigator.share) await navigator.share({ title: `${heading} — ${project.name}`, text: lines });
+      if (navigator.share) await navigator.share({ title: `${heading} — ${project.name}`, text });
       else {
-        await navigator.clipboard.writeText(lines);
+        await navigator.clipboard.writeText(text);
         toast.success("Copied to clipboard");
       }
     } catch {
@@ -148,7 +151,12 @@ function DocumentPage() {
           </section>
         ) : null}
 
-        {project.materials.length ? (
+        {unconfirmed ? (
+          <p role="status" className="no-print mb-4 rounded-md border border-attention/50 bg-attention/10 p-2.5 text-sm font-medium text-attention-foreground">
+            {unconfirmed} AI {unconfirmed === 1 ? "suggestion" : "suggestions"} not confirmed — not included in this {heading.toLowerCase()}.
+          </p>
+        ) : null}
+        {lines.length ? (
           <section className="mt-6">
             <h2 className="text-lg font-semibold text-primary">Materials</h2>
             <table className="mt-2 w-full text-sm">
@@ -161,7 +169,7 @@ function DocumentPage() {
                 </tr>
               </thead>
               <tbody>
-                {project.materials.map((m) => (
+                {lines.map((m) => (
                   <tr key={m.id} className="border-b border-border/60">
                     <td className="py-1.5 pr-2">{m.name || "—"}</td>
                     <td className="py-1.5 text-right">{m.qty}</td>

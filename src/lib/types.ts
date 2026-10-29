@@ -21,7 +21,27 @@ export interface Material {
   price: number;
   /** Untouched AI suggestion; removed once the contractor edits it. */
   ai?: true | undefined;
+  /** New AI suggestion not yet confirmed: left out of totals and documents. Older AI lines never have this. */
+  pending?: true | undefined;
+  /** Already owned / not charged: kept on the job, $0 in totals, not printed. */
+  excluded?: true | undefined;
+  /** A later draft suggested a different price; the line's own price is never changed silently. */
+  aiSuggestedPrice?: number | undefined;
 }
+
+export type ClarificationStatus = "open" | "answered" | "unsure" | "skipped";
+
+export interface Clarification {
+  id: string;
+  question: string;
+  answer?: string;
+  status: ClarificationStatus;
+  /** Fingerprint of the job inputs when this question was resolved. */
+  askedFor?: string;
+}
+
+/** Lines that count in totals and print on the customer document. */
+export const isBillable = (m: Material) => !m.pending && !m.excluded;
 
 export interface Project {
   id: string;
@@ -47,6 +67,10 @@ export interface Project {
   lastDraftNotes?: string;
   /** True while the scope text is the AI's, unedited. */
   scopeFromAi?: boolean | undefined;
+  /** AI clarification questions and the contractor's answers (suggestions, not job facts). */
+  clarifications?: Clarification[];
+  /** Fresh AI materials that look like an existing line; held for contractor review. */
+  pendingDuplicates?: Material[];
   /** Supplier this job's material pricing is based on; set from the default when created. */
   supplier?: SupplierKey;
   paymentTerms?: string;
@@ -91,10 +115,9 @@ export function emptyProject(name: string, defaults: QuoteDefaults = defaultQuot
 }
 
 export function totals(p: Project) {
-  const materials = p.materials.reduce(
-    (s, m) => s + (Number(m.qty) || 0) * (Number(m.price) || 0),
-    0,
-  );
+  const materials = p.materials
+    .filter(isBillable)
+    .reduce((s, m) => s + (Number(m.qty) || 0) * (Number(m.price) || 0), 0);
   const labor = (Number(p.laborHours) || 0) * (Number(p.laborRate) || 0);
   const subtotal = materials + labor;
   const tax = subtotal * ((Number(p.taxPercent) || 0) / 100);
