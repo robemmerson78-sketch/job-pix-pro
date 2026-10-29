@@ -11,3 +11,4 @@
 - [x] Cleanup 5: Document Materials column "Unit" → "Unit Price".
 - [x] Single AI workflow: removed separate photo analysis; Draft scope uses contractor notes.
 - [x] Single default supplier (Home Hardware Building Centre / RONA / Home Depot) in Settings; jobs inherit it.
+- [ ] AI Clarification Questions box + safer material redrafts (contractor jobs).
