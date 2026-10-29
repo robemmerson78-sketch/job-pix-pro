@@ -4,6 +4,22 @@ import { z } from "zod";
 const Input = z.object({
   photos: z.array(z.string()).min(1).max(6),
   hint: z.string().optional(),
+  /** The job's current material lines, so the AI can say which items it is re-suggesting. */
+  currentMaterials: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        qty: z.number(),
+        price: z.number(),
+        owner: z.enum(["contractor", "ai"]),
+        excluded: z.boolean().optional(),
+      }),
+    )
+    .max(60)
+    .optional(),
+  /** Contractor answers to AI clarification questions. */
+  answers: z.array(z.object({ q: z.string(), a: z.string() })).max(20).optional(),
 });
 
 const SYSTEM = `You are an experienced general contractor / handyman estimator.
@@ -26,13 +42,32 @@ Contractor notes vs photos:
   when not visible in the photos (e.g. a new vanity or mirror).
 - Never say something is visible or "shown" if it only comes from the notes.
 - Use the photos for existing conditions; do not contradict the notes.
-Keep it concise: short task lines, no essay, no repeating the notes back.`;
+Keep it concise: short task lines, no essay, no repeating the notes back.
+
+Existing material lines (when given):
+- If an item you list is the same thing as an existing line, add "matchId": "<that line's id>".
+- Never list a second version of an item the contractor already has (owner "contractor"),
+  including ones marked excluded / already owned. Leave those out or give their matchId.
+- Respect the contractor's answers to clarification questions.`;
 
 export const draftScope = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Input.parse(data))
   .handler(async ({ data }) => {
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
+
+    const extra: string[] = [];
+    if (data.currentMaterials?.length) {
+      extra.push(
+        "Existing material lines (JSON):\n" + JSON.stringify(data.currentMaterials),
+      );
+    }
+    if (data.answers?.length) {
+      extra.push(
+        "Contractor answers to clarification questions:\n" +
+          data.answers.map((x) => `Q: ${x.q}\nA: ${x.a}`).join("\n"),
+      );
+    }
 
     const content: Array<Record<string, unknown>> = [
       {
@@ -41,6 +76,7 @@ export const draftScope = createServerFn({ method: "POST" })
           ? `Contractor job description / notes (instructions, may include work not visible in the photos):\n${data.hint.trim()}`
           : "Draft the scope of work from these photos.",
       },
+      ...extra.map((text) => ({ type: "text", text })),
       ...data.photos.map((url) => ({ type: "image_url", image_url: { url } })),
     ];
 
