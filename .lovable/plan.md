@@ -1,6 +1,6 @@
 # AI Clarification Questions + safer material redrafts
 
-(This replaces the unapproved automotive plan as the current plan. The automotive decisions are still in this chat and can be restored into a plan later.)
+(Plan only — no app code has been changed. Automotive estimating is set aside for now, and its decisions remain in this chat for a later plan.)
 
 ## What the code does today (checked)
 
@@ -42,8 +42,9 @@
 4. Redraft: the AI sees your paint and primer lines. Its paint returns as a match, so nothing is added. Primer is a match, so it stays $25. Any loosely similar paint item goes to "Possible duplicates — review" and does not join the quote.
 
 ## Older jobs
-- Lines saved before this change have no new tags. Untagged lines are treated as yours and confirmed, as today, so existing quote totals do not change.
-- Existing `ai: true` lines become "Suggested". **Decision for you below:** these currently count in totals, and applying the new rule would drop them from older quotes until you confirm them.
+- Lines saved before this change keep their current totals and print exactly as they do now. Untagged lines are treated as yours.
+- Older AI-tagged lines get a "review" badge but still count until you confirm, edit or remove them.
+- Test addition: an older job's total and printed quote are identical before and after the update.
 
 ## Acceptance tests
 Automated (Bun, beside `draft-merge.test.ts`):
@@ -63,18 +64,30 @@ Preview checklist:
 - The review list behaves correctly.
 - Live AI run (you): the full paint/primer scenario on a real job.
 
-## Decisions needed from you
-1. **Older jobs with existing AI lines:** keep counting them in totals until edited (safest for old quotes), or treat them as unconfirmed like new suggestions?
-2. **When to ask questions:** only when you tap "Check for questions" (assumed, so there is no extra AI call per draft), or automatically before each draft?
+## Decisions (settled)
+1. **Older jobs keep their current totals and quote behaviour.**
+   - Untagged lines count as yours and confirmed.
+   - Existing AI-tagged lines in older jobs keep counting in totals and keep printing, exactly as today. They show a small "AI suggestion — review" badge, with a Confirm button and the option to edit or remove the line.
+   - Nothing about an older line changes until you act on it.
+   - Only suggestions from drafts made after this change start out unconfirmed and left out of totals.
+2. **Questions are asked only when you tap "Check for questions".** There is never an automatic AI call before a draft.
+
+No open decisions remain.
 
 ## Technical details
 - `types.ts` (all fields optional):
-  - `Material`: `excluded?`, `aiPrevPrice?`, `confirmed?`
+  - `Material`: `pending?: true` (new unconfirmed AI suggestion), `excluded?`, `aiPrevPrice?`
   - `Project`: `clarifications?: { id, question, answer?, status: "open" | "answered" | "unsure" | "skipped", askedFor: string /* input fingerprint */ }[]`, `pendingDuplicates?: Material[]`
-  - `ai: true` keeps meaning "untouched suggestion".
-- New server function `askClarifications` in `src/lib/clarify.functions.ts`, on the same gateway path and model as `draftScope`. Its input is photos, notes, scope, materials (id/name/qty/price/excluded/owned) and the prior Q&A. Its output is strict JSON `{questions: string[]}` capped at 5.
+  - `ai: true` keeps meaning "untouched suggestion" (replaceable on a redraft). Only lines that also carry `pending: true` are left out of totals. Older `ai: true` lines have no `pending` tag, so their totals are unchanged.
+  - Confirm or any edit clears both `ai` and `pending`.
+- New server function `askClarifications` in `src/lib/clarify.functions.ts`, on the same gateway path and model as `draftScope`.
+  - It is called only from the "Check for questions" button.
+  - Its input is photos, notes, scope, materials (id/name/qty/price/excluded/owned) and the prior Q&A.
+  - Its output is strict JSON `{questions: string[]}` capped at 5.
 - `draftScope`'s input gets optional `currentMaterials` and `answers`, and its output gets an optional `matchId` per material. The prompt adds the matching instruction. Old callers still work.
-- `mergeDraft` gets the match-by-id rules, the in-place price-change flag, the excluded/owned protection, and a token-overlap check that routes unsure items to `pendingDuplicates`. It stays a pure function.
-- `totals()` skips `ai` and `excluded` lines; for older jobs this depends on decision 1. `document.$id.tsx` filters the same lines and shows the warning.
+- `mergeDraft` gets the match-by-id rules, the in-place price-change flag, the excluded/owned protection, and a token-overlap check that routes unsure items to `pendingDuplicates`.
+  - Fresh suggestions get `ai` and `pending`.
+  - It stays a pure function.
+- `totals()` skips `pending` and `excluded` lines, so older jobs are unaffected. `document.$id.tsx` filters the same lines and shows the warning.
 - New `ClarificationsBox` component, placed under the notes field in `project.$id.tsx`.
 - No new dependencies, and storage stays on this device.
