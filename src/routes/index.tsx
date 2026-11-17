@@ -1,9 +1,19 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeftRight, BriefcaseBusiness, Copy, FileText, Plus, ReceiptText, Trash2, WalletCards } from "lucide-react";
+import {
+  ArrowLeftRight,
+  BriefcaseBusiness,
+  Copy,
+  FileText,
+  Plus,
+  ReceiptText,
+  Trash2,
+  WalletCards,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { AppHeader } from "@/components/AppHeader";
+import { StoredPhoto } from "@/components/StoredPhoto";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,8 +46,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "JobPix — Photo to Contractor Quote & Invoice" },
       {
         property: "og:description",
-        content:
-          "Turn job-site photos into a professional, printable quote or invoice in minutes.",
+        content: "Turn job-site photos into a professional, printable quote or invoice in minutes.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -87,7 +96,10 @@ function Home() {
           Photos in, priced quote out. Everything stays on this device.
         </p>
 
-        <section aria-label="Job summary" className="mt-6 grid grid-cols-3 overflow-hidden rounded-lg border border-border bg-card shadow-panel">
+        <section
+          aria-label="Job summary"
+          className="mt-6 grid grid-cols-3 overflow-hidden rounded-lg border border-border bg-card shadow-panel"
+        >
           <div className="p-3.5 sm:p-4">
             <BriefcaseBusiness className="mb-2 size-4 text-ai" />
             <p className="text-xl font-extrabold text-primary">{projects.length}</p>
@@ -95,12 +107,16 @@ function Home() {
           </div>
           <div className="border-x border-border p-3.5 sm:p-4">
             <ReceiptText className="mb-2 size-4 text-ai" />
-            <p className="text-xl font-extrabold text-primary">{quoteCount}/{invoiceCount}</p>
+            <p className="text-xl font-extrabold text-primary">
+              {quoteCount}/{invoiceCount}
+            </p>
             <p className="mt-0.5 text-xs font-medium text-muted-foreground">Quotes / invoices</p>
           </div>
           <div className="p-3.5 sm:p-4">
             <WalletCards className="mb-2 size-4 text-attention" />
-            <p className="truncate text-xl font-extrabold text-primary">{money(projectValue, currency)}</p>
+            <p className="truncate text-xl font-extrabold text-primary">
+              {money(projectValue, currency)}
+            </p>
             <p className="mt-0.5 text-xs font-medium text-muted-foreground">Job value</p>
           </div>
         </section>
@@ -146,8 +162,8 @@ function Home() {
                     onClick={() => navigate({ to: "/project/$id", params: { id: p.id } })}
                   >
                     {p.photos[0] ? (
-                      <img
-                        src={p.photos[0]}
+                      <StoredPhoto
+                        photo={p.photos[0]}
                         alt={`${p.name} job site`}
                         className="size-14 shrink-0 rounded-md object-cover"
                       />
@@ -161,8 +177,7 @@ function Home() {
                         {p.name}
                       </span>
                       <span className="block truncate text-sm text-muted-foreground">
-                        {p.client || "No client yet"} ·{" "}
-                        {new Date(p.updatedAt).toLocaleDateString()}
+                        {p.client || "No client yet"} · {new Date(p.updatedAt).toLocaleDateString()}
                       </span>
                     </span>
                     <span className="text-right">

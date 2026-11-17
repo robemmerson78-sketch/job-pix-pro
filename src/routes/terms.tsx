@@ -36,24 +36,34 @@ function Terms() {
           <ArrowLeft className="size-4" /> Settings
         </Link>
         <h1 className="mt-4 text-3xl font-bold text-primary">Terms of service</h1>
+        <p className="mt-1 text-xs text-muted-foreground">Last updated: November 2026</p>
         <div className="mt-4 space-y-4 text-sm leading-relaxed">
           <p>
-            JobPix is a tool that helps you prepare quotes and invoices faster. Everything it
-            suggests — the scope of work, the task list, the materials and the prices — is a draft
-            for you to check.
+            JobPix is a tool that helps you prepare quotes and invoices faster. Everything the AI
+            suggests — the scope of work, tasks, materials, quantities, prices and clarification
+            questions — is a draft for you to check. AI suggestions can be wrong or incomplete.
           </p>
           <p>
-            You are responsible for the quotes and invoices you send. Confirm quantities, prices,
-            taxes and terms before giving a document to a client. JobPix does not check live supplier
-            prices and does not guarantee that any suggestion is accurate or complete.
+            Material prices are rough AI estimates, not prices from any supplier. JobPix does not
+            check live supplier prices or stock. "Check price" only opens the supplier's own search
+            page.
+          </p>
+          <p>
+            You are responsible for the quotes and invoices you send. Confirm the work, quantities,
+            prices, taxes and terms before giving a document to a client.
           </p>
           <p>
             JobPix is not a substitute for professional judgement, permits, inspections or legal and
             tax advice, and it is not intended for automotive or small engine repair work.
           </p>
           <p>
-            The app is provided as is, without warranties. Your job data lives on your device, so
-            keeping backups of important documents is up to you.
+            AI features are subject to usage limits to prevent misuse, and may be unavailable at
+            times. Don't use JobPix to send AI requests that aren't for your own jobs.
+          </p>
+          <p>
+            The app is provided as is, without warranties. Your job data lives only on your device;
+            keeping backups (Settings → Backup &amp; restore) and copies of important documents is
+            up to you.
           </p>
         </div>
       </main>

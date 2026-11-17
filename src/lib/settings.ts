@@ -65,10 +65,15 @@ export function loadPreferences(): Preferences {
   }
 }
 
-export function savePreferences(p: Preferences) {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(PREFS_KEY, JSON.stringify(p));
+export function savePreferences(p: Preferences): boolean {
+  if (!isBrowser()) return false;
+  try {
+    window.localStorage.setItem(PREFS_KEY, JSON.stringify(p));
+  } catch {
+    return false;
+  }
   window.dispatchEvent(new Event("cq:prefs"));
+  return true;
 }
 
 export function loadQuoteDefaults(): QuoteDefaults {
@@ -81,9 +86,14 @@ export function loadQuoteDefaults(): QuoteDefaults {
   }
 }
 
-export function saveQuoteDefaults(d: QuoteDefaults) {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d));
+export function saveQuoteDefaults(d: QuoteDefaults): boolean {
+  if (!isBrowser()) return false;
+  try {
+    window.localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

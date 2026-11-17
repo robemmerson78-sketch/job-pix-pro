@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { askClarifications } from "@/lib/clarify.functions";
+import { resolvePhotos } from "@/lib/photo-store";
 import { clarifyFingerprint, mergeClarifications } from "@/lib/draft-merge";
 import type { Clarification, Project } from "@/lib/types";
 
@@ -37,7 +38,7 @@ export function ClarificationsBox({
       const fp = clarifyFingerprint(project);
       const { questions } = await askClarifications({
         data: {
-          photos: project.photos.slice(0, 4),
+          photos: (await resolvePhotos(project.photos.slice(0, 4))).filter(Boolean),
           notes: project.jobNotes ?? "",
           scope: project.scope,
           materials: project.materials.map((m) => ({
@@ -58,7 +59,12 @@ export function ClarificationsBox({
       });
       // Applied to the latest job state; a failure above leaves everything unchanged.
       update((prev) => ({
-        clarifications: mergeClarifications(prev.clarifications ?? [], questions, clarifyFingerprint(prev), uid),
+        clarifications: mergeClarifications(
+          prev.clarifications ?? [],
+          questions,
+          clarifyFingerprint(prev),
+          uid,
+        ),
       }));
       setChecked(true);
     } catch (e) {

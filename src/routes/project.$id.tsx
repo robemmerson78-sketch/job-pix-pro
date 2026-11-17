@@ -27,9 +27,13 @@ import { deleteAnalysisPhotos, putAnalysisPhoto } from "@/lib/analysis-photos";
 import {
   fileToCompressedDataUrl,
   getProject,
+  pruneDisplayPhotos,
+  storeDisplayPhoto,
   supplierSearchUrl,
   upsertProject,
 } from "@/lib/storage";
+import { isPhotoRef, refId, resolvePhotos } from "@/lib/photo-store";
+import { StoredPhoto } from "@/components/StoredPhoto";
 import { SUPPLIERS, loadPreferences, useCurrency, useHydratedPreferences } from "@/lib/settings";
 import { money, totals, type Material, type Project } from "@/lib/types";
 
@@ -82,6 +86,7 @@ function ProjectPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [missing, setMissing] = useState(false);
   const [drafting, setDrafting] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const currency = useCurrency();
   const prefs = useHydratedPreferences();
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -97,7 +102,8 @@ function ProjectPage() {
     setProject((prev) => {
       if (!prev) return prev;
       const next = { ...prev, ...(typeof patch === "function" ? patch(prev) : patch) };
-      upsertProject(next);
+      // A refused save keeps the edit on screen and warns; the last saved version stays intact.
+      setSaveFailed(!upsertProject(next));
       return next;
     });
   }, []);
@@ -135,7 +141,7 @@ function ProjectPage() {
       const added = await Promise.all(
         picked.map(async (f) => ({
           photoId: crypto.randomUUID(),
-          display: await fileToCompressedDataUrl(f),
+          display: await storeDisplayPhoto(await fileToCompressedDataUrl(f)),
           sharp: await fileToCompressedDataUrl(f, 1600),
         })),
       );
@@ -167,6 +173,8 @@ function ProjectPage() {
       photoIds: ids.filter((_, idx) => idx !== index),
     });
     if (removedId) void deleteAnalysisPhotos([removedId]);
+    const removed = project.photos[index];
+    if (removed && isPhotoRef(removed)) pruneDisplayPhotos([refId(removed)]);
   };
 
   const runDraft = async () => {
@@ -176,14 +184,22 @@ function ProjectPage() {
     }
     setDrafting(true);
     try {
+      const draftPhotos = (await resolvePhotos(project.photos.slice(0, 4))).filter(Boolean);
+      if (!draftPhotos.length) throw new Error("Couldn't load this job's photos on this device.");
       const units = loadPreferences().units;
       const supplierName = SUPPLIERS[supplier].label;
       const notesSent = project.jobNotes ?? "";
       const result = await draftScope({
         data: {
-          photos: project.photos.slice(0, 4),
+          photos: draftPhotos,
           // Previous scope is deliberately NOT sent back, so regeneration replaces it instead of echoing it.
-          hint: [notesSent, `Use ${units} measurements.`, `Price materials as rough per-unit retail at ${supplierName}.`].filter(Boolean).join("\n"),
+          hint: [
+            notesSent,
+            `Use ${units} measurements.`,
+            `Price materials as rough per-unit retail at ${supplierName}.`,
+          ]
+            .filter(Boolean)
+            .join("\n"),
           // Current lines let the AI say which items it is re-suggesting, instead of adding duplicates.
           currentMaterials: project.materials
             .filter((m) => m.name.trim())
@@ -237,6 +253,16 @@ function ProjectPage() {
     <div className="min-h-screen">
       <AppHeader />
       <main className="mx-auto max-w-3xl px-4 pb-32 pt-4">
+        {saveFailed ? (
+          <p
+            role="alert"
+            className="mb-3 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm font-medium text-destructive"
+          >
+            Your latest changes are NOT saved — this device's storage is full. Keep this page open,
+            export a backup in Settings, or remove photos or old jobs, then make any edit to save
+            again.
+          </p>
+        ) : null}
         <Link
           to="/"
           className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground"
@@ -295,8 +321,8 @@ function ProjectPage() {
           <div className="grid grid-cols-3 gap-2">
             {project.photos.map((src, i) => (
               <div key={i} className="relative aspect-square">
-                <img
-                  src={src}
+                <StoredPhoto
+                  photo={src}
                   alt={`Job site photo ${i + 1}`}
                   className="size-full rounded-md object-cover"
                 />
@@ -355,7 +381,12 @@ function ProjectPage() {
           </div>
           <ClarificationsBox project={project} update={update} />
 
-          <Button variant="action" className="mt-2 h-14 w-full text-base" onClick={runDraft} disabled={drafting}>
+          <Button
+            variant="action"
+            className="mt-2 h-14 w-full text-base"
+            onClick={runDraft}
+            disabled={drafting}
+          >
             {drafting ? (
               <Loader2 className="size-5 animate-spin" />
             ) : (
@@ -372,7 +403,6 @@ function ProjectPage() {
             The AI draft is a rough first pass — check every line and price before sending.
           </p>
         </Section>
-
 
         {/* Scope */}
         <Section title="Scope of work">
@@ -401,9 +431,7 @@ function ProjectPage() {
                   size="icon"
                   className="size-11 shrink-0 text-muted-foreground"
                   aria-label="Delete task"
-                  onClick={() =>
-                    update({ tasks: project.tasks.filter((x) => x.id !== task.id) })
-                  }
+                  onClick={() => update({ tasks: project.tasks.filter((x) => x.id !== task.id) })}
                 >
                   <Trash2 className="size-5" />
                 </Button>
@@ -422,16 +450,22 @@ function ProjectPage() {
         {/* Materials */}
         <Section title="Materials">
           <p className="-mt-1 mb-3 text-xs text-muted-foreground">
-            Based on {SUPPLIERS[supplier].label} pricing. "Check price" opens the item on their site.
+            Based on {SUPPLIERS[supplier].label} pricing. "Check price" opens the item on their
+            site.
           </p>
           {pendingCount ? (
-            <p role="status" className="mb-3 rounded-md border border-attention/50 bg-attention/10 p-2.5 text-sm font-medium text-attention-foreground">
-              {pendingCount} AI {pendingCount === 1 ? "suggestion" : "suggestions"} not confirmed — not in this quote.
+            <p
+              role="status"
+              className="mb-3 rounded-md border border-attention/50 bg-attention/10 p-2.5 text-sm font-medium text-attention-foreground"
+            >
+              {pendingCount} AI {pendingCount === 1 ? "suggestion" : "suggestions"} not confirmed —
+              not in this quote.
             </p>
           ) : null}
           {legacyAiCount ? (
             <p className="mb-3 text-xs text-muted-foreground">
-              {legacyAiCount} earlier AI {legacyAiCount === 1 ? "line is" : "lines are"} still in this quote — review and confirm when you can.
+              {legacyAiCount} earlier AI {legacyAiCount === 1 ? "line is" : "lines are"} still in
+              this quote — review and confirm when you can.
             </p>
           ) : null}
           <div className="space-y-3">
@@ -474,10 +508,18 @@ function ProjectPage() {
                     <span className="text-attention-foreground">
                       AI price changed {fmt(m.price || 0)} → {fmt(m.aiSuggestedPrice)}
                     </span>
-                    <Button size="sm" variant="outline" onClick={() => setMaterial(m.id, { price: m.price })}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setMaterial(m.id, { price: m.price })}
+                    >
                       Keep {fmt(m.price || 0)}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setMaterial(m.id, { price: m.aiSuggestedPrice ?? m.price })}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setMaterial(m.id, { price: m.aiSuggestedPrice ?? m.price })}
+                    >
                       Use {fmt(m.aiSuggestedPrice)}
                     </Button>
                   </div>
@@ -507,7 +549,12 @@ function ProjectPage() {
                       className="h-11 text-base"
                     />
                   </div>
-<Button variant="secondary" className="h-11" disabled={!m.name.trim()} asChild={!!m.name.trim()}>
+                  <Button
+                    variant="secondary"
+                    className="h-11"
+                    disabled={!m.name.trim()}
+                    asChild={!!m.name.trim()}
+                  >
                     {m.name.trim() ? (
                       <a
                         href={supplierSearchUrl(m.name, supplier)}
@@ -530,7 +577,9 @@ function ProjectPage() {
                       type="checkbox"
                       className="size-4 accent-primary"
                       checked={!!m.excluded}
-                      onChange={(e) => setMaterial(m.id, { excluded: e.target.checked || undefined })}
+                      onChange={(e) =>
+                        setMaterial(m.id, { excluded: e.target.checked || undefined })
+                      }
                     />
                     Already owned — don't charge
                   </label>
@@ -553,11 +602,15 @@ function ProjectPage() {
             <div className="mt-4 rounded-lg border border-attention/50 bg-attention/10 p-3">
               <p className="text-sm font-semibold text-primary">Possible duplicates — review</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                The AI suggested these, but they look like lines you already have. They are not in the quote.
+                The AI suggested these, but they look like lines you already have. They are not in
+                the quote.
               </p>
               <ul className="mt-2 space-y-2">
                 {project.pendingDuplicates.map((d) => (
-                  <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-card p-2 text-sm">
+                  <li
+                    key={d.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-card p-2 text-sm"
+                  >
                     <span>
                       {d.name} ×{d.qty} · {fmt(d.price || 0)}
                     </span>
@@ -571,7 +624,9 @@ function ProjectPage() {
                               ...prev.materials,
                               { id: d.id, name: d.name, qty: d.qty, price: d.price },
                             ],
-                            pendingDuplicates: (prev.pendingDuplicates ?? []).filter((x) => x.id !== d.id),
+                            pendingDuplicates: (prev.pendingDuplicates ?? []).filter(
+                              (x) => x.id !== d.id,
+                            ),
                           }))
                         }
                       >
@@ -582,7 +637,9 @@ function ProjectPage() {
                         variant="ghost"
                         onClick={() =>
                           update((prev) => ({
-                            pendingDuplicates: (prev.pendingDuplicates ?? []).filter((x) => x.id !== d.id),
+                            pendingDuplicates: (prev.pendingDuplicates ?? []).filter(
+                              (x) => x.id !== d.id,
+                            ),
                           }))
                         }
                       >
@@ -659,7 +716,9 @@ function ProjectPage() {
             </div>
             <Row label="Tax / markup" value={fmt(t.tax)} />
             <div className="mt-3 border-t-2 border-attention pt-4">
-              <span className="block text-xs font-semibold text-muted-foreground">Recommended price</span>
+              <span className="block text-xs font-semibold text-muted-foreground">
+                Recommended price
+              </span>
               <div className="mt-1 flex items-baseline justify-between gap-3">
                 <span className="text-lg font-bold text-primary">Total</span>
                 <span className="text-4xl font-extrabold text-primary">{fmt(t.total)}</span>

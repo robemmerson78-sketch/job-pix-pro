@@ -1,8 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { guardAiRequest } from "./ai-guard";
 
 const Input = z.object({
-  photos: z.array(z.string()).max(6),
+  photos: z.array(z.string()).max(4),
   notes: z.string().max(8000).optional(),
   scope: z.string().max(8000).optional(),
   materials: z
@@ -45,6 +46,13 @@ export const askClarifications = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
+    await guardAiRequest(
+      data.photos,
+      data.notes,
+      data.scope,
+      JSON.stringify(data.materials ?? []),
+      JSON.stringify(data.resolved ?? []),
+    );
 
     const parts = [
       `Contractor notes:\n${data.notes?.trim() || "(none)"}`,
@@ -118,15 +126,21 @@ export const askClarifications = createServerFn({ method: "POST" })
           throw new Error("AI couldn't check for questions. Try again.");
       }
     }
-    const cleaned = text.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    const cleaned = text
+      .replace(/^```(?:json)?/i, "")
+      .replace(/```$/, "")
+      .trim();
     let parsed: unknown;
     try {
       parsed = JSON.parse(cleaned);
     } catch {
       throw new Error("AI returned unreadable questions. Try again.");
     }
-    const { questions } = z
-      .object({ questions: z.array(z.string()).default([]) })
-      .parse(parsed);
-    return { questions: questions.map((q) => q.trim()).filter(Boolean).slice(0, 5) };
+    const { questions } = z.object({ questions: z.array(z.string()).default([]) }).parse(parsed);
+    return {
+      questions: questions
+        .map((q) => q.trim())
+        .filter(Boolean)
+        .slice(0, 5),
+    };
   });

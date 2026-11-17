@@ -13,8 +13,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "../components/ui/sonner";
 import { ThemeManager } from "../components/ThemeManager";
+import { StorageWatcher } from "../components/StorageWatcher";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-
 
 function NotFoundComponent() {
   return (
@@ -85,7 +85,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Professional photo-to-quote software for contractors." },
       { name: "author", content: "JobPix" },
       { property: "og:title", content: "JobPix" },
-      { property: "og:description", content: "Professional photo-to-quote software for contractors." },
+      {
+        property: "og:description",
+        content: "Professional photo-to-quote software for contractors.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -131,9 +134,9 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <ThemeManager />
+      <StorageWatcher />
       <Outlet />
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );
 }
-

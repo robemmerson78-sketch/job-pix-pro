@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment -- bun:test types are not installed */
 // @ts-nocheck -- run with `bun test`; bun:test types are not installed in this project.
 import { describe, expect, test } from "bun:test";
 import { draftIsStale, mergeDraft, type DraftResult } from "./draft-merge";
@@ -85,9 +86,21 @@ describe("mergeDraft", () => {
 
   test("edited and typed tasks survive", () => {
     let { p } = apply(base(), draftA);
-    p = { ...p, tasks: [{ ...p.tasks[0], text: "Remove vanity carefully", ai: undefined }, p.tasks[1], { id: "t", text: "Haul away" }] };
+    p = {
+      ...p,
+      tasks: [
+        { ...p.tasks[0], text: "Remove vanity carefully", ai: undefined },
+        p.tasks[1],
+        { id: "t", text: "Haul away" },
+      ],
+    };
     p = apply(p, draftB).p;
-    expect(p.tasks.map((t) => t.text)).toEqual(["Remove vanity carefully", "Haul away", "Remove vanity", "Hang mirror"]);
+    expect(p.tasks.map((t) => t.text)).toEqual([
+      "Remove vanity carefully",
+      "Haul away",
+      "Remove vanity",
+      "Hang mirror",
+    ]);
   });
 
   test("edited scope is kept, AI scope is replaced", () => {
@@ -99,7 +112,11 @@ describe("mergeDraft", () => {
   });
 
   test("legacy job lines are kept", () => {
-    const p = { ...base(), scope: "Old", materials: [{ id: "x", name: "Old item", qty: 1, price: 5 }] };
+    const p = {
+      ...base(),
+      scope: "Old",
+      materials: [{ id: "x", name: "Old item", qty: 1, price: 5 }],
+    };
     const r = apply(p, draftA).p;
     expect(r.scope).toBe("Old");
     expect(r.materials[0]).toEqual({ id: "x", name: "Old item", qty: 1, price: 5 });
@@ -108,7 +125,19 @@ describe("mergeDraft", () => {
   test("other job details are untouched", () => {
     const b = base();
     const { p } = apply(b, draftA);
-    for (const k of ["photos", "photoIds", "laborHours", "laborRate", "taxPercent", "notes", "jobNotes", "supplier", "client", "address", "type"] as const)
+    for (const k of [
+      "photos",
+      "photoIds",
+      "laborHours",
+      "laborRate",
+      "taxPercent",
+      "notes",
+      "jobNotes",
+      "supplier",
+      "client",
+      "address",
+      "type",
+    ] as const)
       expect(p[k]).toEqual(b[k]);
   });
 
@@ -161,15 +190,30 @@ describe("safer material redrafts", () => {
 
   test("a matchId to a contractor line never changes it", () => {
     let p: Project = { ...base(), materials: [{ id: "own", name: "Primer", qty: 1, price: 25 }] };
-    p = apply(p, { description: "", tasks: [], materials: [{ name: "Primer quart", qty: 3, price: 55, matchId: "own" }] }).p;
+    p = apply(p, {
+      description: "",
+      tasks: [],
+      materials: [{ name: "Primer quart", qty: 3, price: 55, matchId: "own" }],
+    }).p;
     expect(p.materials).toEqual([{ id: "own", name: "Primer", qty: 1, price: 25 }]);
   });
 
   test("excluded line stays excluded, costs $0 and is not re-added", () => {
-    let p: Project = { ...base(), laborHours: 0, taxPercent: 0, materials: [{ id: "x", name: "Exterior paint", qty: 2, price: 60, excluded: true }] };
+    let p: Project = {
+      ...base(),
+      laborHours: 0,
+      taxPercent: 0,
+      materials: [{ id: "x", name: "Exterior paint", qty: 2, price: 60, excluded: true }],
+    };
     expect(totals(p).materials).toBe(0);
-    p = apply(p, { description: "", tasks: [], materials: [{ name: "Exterior paint", qty: 2, price: 60 }] }).p;
-    expect(p.materials).toEqual([{ id: "x", name: "Exterior paint", qty: 2, price: 60, excluded: true }]);
+    p = apply(p, {
+      description: "",
+      tasks: [],
+      materials: [{ name: "Exterior paint", qty: 2, price: 60 }],
+    }).p;
+    expect(p.materials).toEqual([
+      { id: "x", name: "Exterior paint", qty: 2, price: 60, excluded: true },
+    ]);
   });
 
   test("new unconfirmed suggestions are left out of totals until confirmed", () => {
@@ -180,7 +224,12 @@ describe("safer material redrafts", () => {
   });
 
   test("older AI-tagged lines (no pending tag) still count in totals", () => {
-    const p: Project = { ...base(), laborHours: 0, taxPercent: 0, materials: [{ id: "o", name: "Old AI caulk", qty: 2, price: 9, ai: true }] };
+    const p: Project = {
+      ...base(),
+      laborHours: 0,
+      taxPercent: 0,
+      materials: [{ id: "o", name: "Old AI caulk", qty: 2, price: 9, ai: true }],
+    };
     expect(totals(p).total).toBe(18);
   });
 
@@ -194,13 +243,34 @@ describe("safer material redrafts", () => {
 describe("mergeClarifications", () => {
   const ids = () => `q${++n}`;
   test("answered questions are not re-asked while inputs are unchanged", () => {
-    const prev = [{ id: "a", question: "Do you already have paint?", answer: "Yes", status: "answered" as const, askedFor: "fp1" }];
-    const next = mergeClarifications(prev, ["Do you already have paint?", "Wall height?"], "fp1", ids);
+    const prev = [
+      {
+        id: "a",
+        question: "Do you already have paint?",
+        answer: "Yes",
+        status: "answered" as const,
+        askedFor: "fp1",
+      },
+    ];
+    const next = mergeClarifications(
+      prev,
+      ["Do you already have paint?", "Wall height?"],
+      "fp1",
+      ids,
+    );
     expect(next.map((c) => c.question)).toEqual(["Do you already have paint?", "Wall height?"]);
     expect(next[0]).toEqual(prev[0]);
   });
   test("a question can be re-asked after the job changed", () => {
-    const prev = [{ id: "a", question: "Do you already have paint?", answer: "Yes", status: "answered" as const, askedFor: "fp1" }];
+    const prev = [
+      {
+        id: "a",
+        question: "Do you already have paint?",
+        answer: "Yes",
+        status: "answered" as const,
+        askedFor: "fp1",
+      },
+    ];
     const next = mergeClarifications(prev, ["Do you already have paint?"], "fp2", ids);
     expect(next).toHaveLength(1);
     expect(next[0].status).toBe("open");

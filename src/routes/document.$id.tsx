@@ -45,7 +45,6 @@ function DocumentPage() {
 
   if (!project) return <div className="min-h-screen" />;
 
-
   const t = totals(project);
   // New unconfirmed AI suggestions and "already owned" lines never reach the customer.
   const lines = project.materials.filter(isBillable);
@@ -60,9 +59,7 @@ function DocumentPage() {
       "",
       project.scope,
       "",
-      ...lines.map(
-        (m) => `• ${m.name} ×${m.qty} — ${fmt((m.qty || 0) * (m.price || 0))}`,
-      ),
+      ...lines.map((m) => `• ${m.name} ×${m.qty} — ${fmt((m.qty || 0) * (m.price || 0))}`),
       `Labor: ${project.laborHours} hrs @ ${fmt(project.laborRate)} = ${fmt(t.labor)}`,
       `Total: ${fmt(t.total)}`,
     ].join("\n");
@@ -98,7 +95,9 @@ function DocumentPage() {
         )}
         <header className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-primary pb-5">
           <div>
-            <h1 className="text-3xl font-extrabold text-primary">{c.business || c.name || "Your business"}</h1>
+            <h1 className="text-3xl font-extrabold text-primary">
+              {c.business || c.name || "Your business"}
+            </h1>
             <div className="mt-1 text-sm text-muted-foreground">
               {c.business && c.name ? <div>{c.name}</div> : null}
               {c.address ? <div>{c.address}</div> : null}
@@ -108,9 +107,7 @@ function DocumentPage() {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-primary">
-              {heading}
-            </div>
+            <div className="text-2xl font-bold text-primary">{heading}</div>
             <div className="text-sm text-muted-foreground">Ref {ref}</div>
             <div className="text-sm text-muted-foreground">
               {new Date(project.createdAt).toLocaleDateString()}
@@ -152,8 +149,12 @@ function DocumentPage() {
         ) : null}
 
         {unconfirmed ? (
-          <p role="status" className="no-print mb-4 rounded-md border border-attention/50 bg-attention/10 p-2.5 text-sm font-medium text-attention-foreground">
-            {unconfirmed} AI {unconfirmed === 1 ? "suggestion" : "suggestions"} not confirmed — not included in this {heading.toLowerCase()}.
+          <p
+            role="status"
+            className="no-print mb-4 rounded-md border border-attention/50 bg-attention/10 p-2.5 text-sm font-medium text-attention-foreground"
+          >
+            {unconfirmed} AI {unconfirmed === 1 ? "suggestion" : "suggestions"} not confirmed — not
+            included in this {heading.toLowerCase()}.
           </p>
         ) : null}
         {lines.length ? (
@@ -174,9 +175,7 @@ function DocumentPage() {
                     <td className="py-1.5 pr-2">{m.name || "—"}</td>
                     <td className="py-1.5 text-right">{m.qty}</td>
                     <td className="py-1.5 text-right">{fmt(m.price || 0)}</td>
-                    <td className="py-1.5 text-right">
-                      {fmt((m.qty || 0) * (m.price || 0))}
-                    </td>
+                    <td className="py-1.5 text-right">{fmt((m.qty || 0) * (m.price || 0))}</td>
                   </tr>
                 ))}
               </tbody>

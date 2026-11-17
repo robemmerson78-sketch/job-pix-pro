@@ -4,6 +4,7 @@ import { ArrowLeft, ImagePlus, Mail, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppHeader } from "@/components/AppHeader";
+import { BackupSection } from "@/components/BackupSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -142,7 +143,10 @@ function Settings() {
   const updatePrefs = (patch: Partial<Preferences>) => {
     const next = { ...prefs, ...patch };
     setPrefs(next);
-    savePreferences(next);
+    if (!savePreferences(next)) {
+      toast.error("Not saved — this device's storage is full.");
+      return;
+    }
     if (patch.keepSharpPhotos === false) {
       // Only the separate analysis-copy store is cleared; job photos are untouched.
       void clearAnalysisPhotos();
@@ -219,7 +223,11 @@ function Settings() {
                   hidden
                   onChange={(e) => pickLogo(e.target.files?.[0])}
                 />
-                <Button variant="secondary" className="h-11" onClick={() => logoRef.current?.click()}>
+                <Button
+                  variant="secondary"
+                  className="h-11"
+                  onClick={() => logoRef.current?.click()}
+                >
                   {c.logo ? "Replace" : "Add logo"}
                 </Button>
                 {c.logo ? (
@@ -255,8 +263,11 @@ function Settings() {
             variant="action"
             className="mt-4 h-14 w-full text-base"
             onClick={() => {
-              saveContractor(c);
-              toast.success("Business profile saved");
+              if (saveContractor(c)) toast.success("Business profile saved");
+              else
+                toast.error(
+                  "Not saved — this device's storage is full. Try a smaller logo or export a backup and remove old jobs.",
+                );
             }}
           >
             Save business profile
@@ -348,8 +359,8 @@ function Settings() {
             variant="action"
             className="mt-4 h-14 w-full text-base"
             onClick={() => {
-              saveQuoteDefaults(defaults);
-              toast.success("Quote defaults saved");
+              if (saveQuoteDefaults(defaults)) toast.success("Quote defaults saved");
+              else toast.error("Not saved — this device's storage is full.");
             }}
           >
             Save quote defaults
@@ -418,10 +429,7 @@ function Settings() {
           </div>
         </Section>
 
-        <Section
-          title="Photo analysis"
-          description="Photo analysis settings for this device."
-        >
+        <Section title="Photo analysis" description="Photo analysis settings for this device.">
           <div className="space-y-5 rounded-lg border border-border bg-card p-5 shadow-panel">
             <div className="space-y-2">
               <Label className="label-caps">Keep sharper photo copies</Label>
@@ -438,6 +446,12 @@ function Settings() {
                 Your job photos are never affected either way.
               </p>
             </div>
+          </div>
+        </Section>
+
+        <Section title="Backup & restore" description="Keep a copy of your jobs off this device.">
+          <div className="rounded-lg border border-border bg-card p-5 shadow-panel">
+            <BackupSection />
           </div>
         </Section>
 
@@ -502,7 +516,10 @@ function Settings() {
           </div>
         </Section>
 
-        <Section title="Suggest a feature" description="What would make JobPix more useful for you?">
+        <Section
+          title="Suggest a feature"
+          description="What would make JobPix more useful for you?"
+        >
           <div className="space-y-4 rounded-lg border border-border bg-card p-5 shadow-panel">
             <Textarea
               placeholder="Your idea"

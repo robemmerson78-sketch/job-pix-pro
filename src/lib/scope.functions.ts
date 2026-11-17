@@ -1,9 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { guardAiRequest } from "./ai-guard";
 
 const Input = z.object({
-  photos: z.array(z.string()).min(1).max(6),
-  hint: z.string().optional(),
+  photos: z.array(z.string()).min(1).max(4),
+  hint: z.string().max(8000).optional(),
   /** The job's current material lines, so the AI can say which items it is re-suggesting. */
   currentMaterials: z
     .array(
@@ -19,7 +20,10 @@ const Input = z.object({
     .max(60)
     .optional(),
   /** Contractor answers to AI clarification questions. */
-  answers: z.array(z.object({ q: z.string(), a: z.string() })).max(20).optional(),
+  answers: z
+    .array(z.object({ q: z.string(), a: z.string() }))
+    .max(20)
+    .optional(),
 });
 
 const SYSTEM = `You are an experienced general contractor / handyman estimator.
@@ -55,12 +59,16 @@ export const draftScope = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
+    await guardAiRequest(
+      data.photos,
+      data.hint,
+      JSON.stringify(data.currentMaterials ?? []),
+      JSON.stringify(data.answers ?? []),
+    );
 
     const extra: string[] = [];
     if (data.currentMaterials?.length) {
-      extra.push(
-        "Existing material lines (JSON):\n" + JSON.stringify(data.currentMaterials),
-      );
+      extra.push("Existing material lines (JSON):\n" + JSON.stringify(data.currentMaterials));
     }
     if (data.answers?.length) {
       extra.push(
@@ -84,7 +92,7 @@ export const draftScope = createServerFn({ method: "POST" })
       method: "POST",
       headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
       body: JSON.stringify({
-        model: "google/gemini-3.6-flash",
+        model: "google/gemini-3.8-flash",
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM },
@@ -101,7 +109,10 @@ export const draftScope = createServerFn({ method: "POST" })
       choices?: Array<{ message?: { content?: string } }>;
     };
     const text = json.choices?.[0]?.message?.content ?? "";
-    const cleaned = text.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    const cleaned = text
+      .replace(/^```(?:json)?/i, "")
+      .replace(/```$/, "")
+      .trim();
 
     let parsed: unknown;
     try {

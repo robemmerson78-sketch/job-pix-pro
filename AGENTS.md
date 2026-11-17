@@ -11,3 +11,6 @@
 
 ## Rules
 - Material ownership: `ai` = untouched AI line (replaceable on redraft), `pending` = new unconfirmed suggestion (excluded from totals/documents), no tag = contractor-owned and never changed by AI; all merging lives in the pure `src/lib/draft-merge.ts` — keeps redraft rules testable in one place.
+- Job display photos live in IndexedDB (`src/lib/photo-store.ts`); jobs keep `idb:<id>` refs, and inline `data:` photos from older jobs stay valid. Delete a stored photo only when no job references it, so duplicated jobs keep their photos.
+- Public AI server functions must call `guardAiRequest` (`src/lib/ai-guard.ts`) first. It enforces size caps plus best-effort per-instance rate limits, because the app has no accounts or shared store.
+- All localStorage writes go through safe writers that return success. A refused save must warn the user and never throw or silently drop edits.

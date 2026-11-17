@@ -13,3 +13,4 @@
 - [x] Single default supplier (Home Hardware Building Centre / RONA / Home Depot) in Settings; jobs inherit it.
 - [x] AI Clarification Questions box + safer material redrafts (contractor jobs).
 - [ ] Automotive estimating (planned, decisions in chat; not started).
+- [x] Phase 1 launch hardening: AI request caps/limits, storage reliability + photos to IndexedDB, backup export/restore, accurate privacy/terms, replace deprecated draft model.

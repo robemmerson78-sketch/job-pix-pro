@@ -88,7 +88,10 @@ export interface Contractor {
   logo?: string;
 }
 
-export function emptyProject(name: string, defaults: QuoteDefaults = defaultQuoteDefaults): Project {
+export function emptyProject(
+  name: string,
+  defaults: QuoteDefaults = defaultQuoteDefaults,
+): Project {
   const now = Date.now();
   return {
     id: crypto.randomUUID(),

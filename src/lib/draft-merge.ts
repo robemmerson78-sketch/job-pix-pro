@@ -9,7 +9,22 @@ export interface DraftResult {
 
 const key = (s: string) => s.trim().toLowerCase();
 
-const STOP = new Set(["and", "for", "the", "with", "per", "each", "gal", "gallon", "box", "pack", "roll", "bag", "set", "kit"]);
+const STOP = new Set([
+  "and",
+  "for",
+  "the",
+  "with",
+  "per",
+  "each",
+  "gal",
+  "gallon",
+  "box",
+  "pack",
+  "roll",
+  "bag",
+  "set",
+  "kit",
+]);
 const words = (s: string) =>
   new Set(
     s
@@ -101,7 +116,9 @@ export function mergeDraft(
     }
 
     materials = [
-      ...prev.materials.flatMap((m) => (!m.ai ? [m] : updated.has(m.id) ? [updated.get(m.id)!] : [])),
+      ...prev.materials.flatMap((m) =>
+        !m.ai ? [m] : updated.has(m.id) ? [updated.get(m.id)!] : [],
+      ),
       ...fresh,
     ];
     pendingDuplicates = review;

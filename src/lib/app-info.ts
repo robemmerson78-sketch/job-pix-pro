@@ -4,8 +4,7 @@ export const SUPPORT_EMAIL = "jobpixhelp@repairman.com";
 
 /** Small, non-sensitive diagnostics appended to support emails. */
 export function diagnostics(screen: string) {
-  const platform =
-    typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 160) : "unknown";
+  const platform = typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 160) : "unknown";
   return [
     "",
     "---",
